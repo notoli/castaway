@@ -10,7 +10,8 @@ export default function Home() {
 
   // Load user's saved albums from Supabase
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
+
     const fetchAlbums = async () => {
       const { data } = await supabase
         .from("user_albums")
@@ -28,17 +29,20 @@ export default function Home() {
       setResults([]);
       return;
     }
+
     const timer = setTimeout(async () => {
-      const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-          query
-        )}&type=album&limit=5`,
-        {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
-        }
-      );
-      const data = await res.json();
-      setResults(data.albums?.items || []);
+      try {
+        const res = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+            query
+          )}&type=album&limit=5`,
+          { headers: { Authorization: `Bearer ${session.accessToken}` } }
+        );
+        const data = await res.json();
+        setResults(data.albums?.items || []);
+      } catch (err) {
+        console.error("Spotify search error:", err);
+      }
     }, 300);
 
     return () => clearTimeout(timer);
@@ -66,8 +70,8 @@ export default function Home() {
     );
   }
 
-  // Add album to Supabase and state
   const addAlbum = async (album) => {
+    if (!session?.user?.id) return;
     if (myAlbums.length >= 5) return;
     if (myAlbums.some((a) => a.album_id === album.id)) return;
 
@@ -81,16 +85,13 @@ export default function Home() {
       },
     ]);
 
-    if (!error) setMyAlbums([...myAlbums, data[0]]);
+    if (!error && data) setMyAlbums([...myAlbums, data[0]]);
   };
 
-  // Remove album from Supabase and state
   const removeAlbum = async (album) => {
-    const { error } = await supabase
-      .from("user_albums")
-      .delete()
-      .eq("id", album.id);
+    if (!album.id) return;
 
+    const { error } = await supabase.from("user_albums").delete().eq("id", album.id);
     if (!error) setMyAlbums(myAlbums.filter((a) => a.id !== album.id));
   };
 
