@@ -9,7 +9,7 @@ import styles from "../styles/Home.module.css";
 const spotifyApi = new SpotifyWebApi();
 
 export default function Home() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,12 +18,14 @@ export default function Home() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchRef = useRef(null);
 
-  // Redirect to login if not logged in
+  // Redirect only if unauthenticated
   useEffect(() => {
-    if (!session) router.push("/login");
-  }, [session]);
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
-  // Fetch user's saved albums
+  // Fetch user's saved albums when authenticated
   useEffect(() => {
     if (session) fetchUserAlbums();
   }, [session]);
@@ -112,8 +114,8 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // If session is not loaded yet, don’t render anything
-  if (!session) return null;
+  // Don't render until session is authenticated
+  if (status === "loading") return null;
 
   return (
     <div className={styles.container}>
