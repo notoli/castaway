@@ -132,67 +132,72 @@ export default function Home() {
       </div>
 
       <h2>Choose Your Top 5 Albums</h2>
-      <div style={{ position: "relative" }} ref={dropdownRef}>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for an album..."
-          style={{
-            width: "100%",
-            padding: "10px",
-            fontSize: "14px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-          }}
-        />
+      <div style={{ position: "relative", overflow: "visible" }} ref={dropdownRef}>
+  <input
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+    placeholder="Search for an album..."
+    style={{
+      width: "100%",
+      padding: "10px",
+      fontSize: "14px",
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+    }}
+  />
 
-        {results.length > 0 && (
-          <ul
+  {results.length > 0 && (
+    <ul
+      style={{
+        listStyle: "none",
+        margin: 0,
+        padding: 0,
+        border: "1px solid #ccc",
+        borderTop: "none",
+        maxHeight: "200px",
+        overflowY: "auto",
+        position: "absolute",
+        width: "100%",
+        backgroundColor: "white",
+        zIndex: 999,
+      }}
+    >
+      {results.map((album) => (
+        <li key={album.id} style={{ padding: 0 }}>
+          <button
+            onClick={() => addAlbum(album)}
             style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              border: "1px solid #ccc",
-              borderTop: "none",
-              maxHeight: "200px",
-              overflowY: "auto",
-              position: "absolute",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "6px",
               width: "100%",
-              backgroundColor: "white",
-              zIndex: 50,
+              textAlign: "left",
+              border: "none",
+              background: "white",
+              cursor: "pointer",
             }}
           >
-            {results.map((album) => (
-              <li
-                key={album.id}
-                onClick={() => addAlbum(album)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "6px",
-                  cursor: "pointer",
-                  borderBottom: "1px solid #eee",
-                }}
-              >
-                <img
-                  src={album.images[2]?.url || album.images[0]?.url}
-                  width="40"
-                  height="40"
-                  alt={album.name}
-                  style={{ borderRadius: "3px" }}
-                />
-                <div style={{ flex: "1" }}>
-                  <strong>{album.name}</strong>
-                  <div style={{ fontSize: "12px", color: "#666" }}>
-                    {album.artists[0].name}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+            <img
+              src={album.images[2]?.url || album.images[0]?.url}
+              width="40"
+              height="40"
+              alt={album.name}
+              style={{ borderRadius: "3px" }}
+            />
+            <div style={{ flex: "1" }}>
+              <strong>{album.name}</strong>
+              <div style={{ fontSize: "12px", color: "#666" }}>
+                {album.artists[0].name}
+              </div>
+            </div>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
 
       <h3 style={{ marginTop: "40px" }}>My Top Albums</h3>
       {myAlbums.length === 0 && <p>No albums chosen yet.</p>}
