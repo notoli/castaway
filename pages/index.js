@@ -131,7 +131,7 @@ export default function Home() {
           marginTop: "1rem",
         }}
       >
-        {albums.map((a) => (
+{albums.map((a) => (
   <div
     key={a.id}
     style={{
@@ -140,48 +140,40 @@ export default function Home() {
       padding: "0.5rem",
       background: "#fff",
       textAlign: "center",
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between", // pushes button down
-      height: "100%", // make all cards equal height in the grid
+      position: "relative", // needed so the cross can be positioned absolutely
     }}
   >
-    <div>
-      {a.album_image && (
-        <img
-          src={a.album_image}
-          alt={a.album_name}
-          style={{ width: "100%", borderRadius: "6px" }}
-        />
-      )}
-      <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>
-        {a.album_name}
-      </p>
-      <p style={{ margin: "0", fontSize: "0.9rem", color: "#555" }}>
-        {a.artist_name}
-      </p>
-    </div>
-
-    {/* Delete button aligned at bottom */}
+    {/* Delete (X) button in top-right */}
     <button
       onClick={() => deleteAlbum(a.id, a.album_name)}
       style={{
-        marginTop: "auto",
-        padding: "0.35rem 0.75rem",
-        background: "#e63946",
-        color: "white",
+        position: "absolute",
+        top: "6px",
+        right: "6px",
+        background: "transparent",
         border: "none",
-        borderRadius: "4px",
+        fontSize: "1.2rem",
+        color: "#888",
         cursor: "pointer",
-        fontSize: "0.85rem",
       }}
+      title="Delete album"
     >
-      Delete
+      ×
     </button>
+
+    {a.album_image && (
+      <img
+        src={a.album_image}
+        alt={a.album_name}
+        style={{ width: "100%", borderRadius: "6px" }}
+      />
+    )}
+    <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
+    <p style={{ margin: "0", fontSize: "0.9rem", color: "#555" }}>
+      {a.artist_name}
+    </p>
   </div>
 ))}
-
       </div>
 
       {/* Search */}
