@@ -4,7 +4,7 @@ import type { AppProps } from "next/app";
 export default function MyApp({
   Component,
   pageProps: { session, ...pageProps },
-}: AppProps) {
+}: AppProps & { pageProps: { session: any } }) {
   return (
     <SessionProvider session={session} refetchInterval={0}>
       <Component {...pageProps} />
