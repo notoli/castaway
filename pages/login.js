@@ -30,7 +30,11 @@ export default function Login() {
       </p>
       <button
         className={styles.signoutButton}
-        onClick={() => signIn("spotify")}
+        onClick={() =>
+          signIn("spotify", {
+            callbackUrl: "/", // redirect back to homepage after login
+          })
+        }
         style={{ padding: "0.75rem 2rem", fontSize: "1rem", boxShadow: "0 3px 8px rgba(0,0,0,0.2)" }}
       >
         Sign in with Spotify
