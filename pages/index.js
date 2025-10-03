@@ -62,21 +62,37 @@ export default function Home() {
         artist_name: album.artists[0]?.name,
         album_image: album.images[0]?.url || null,
       })
-      .select(); // returns the inserted row
+      .select();
 
     if (error) {
-      // 👇 Friendly error if trigger blocks the insert
       if (error.message.includes("You can only add up to 5 albums")) {
         alert("You can only add up to 5 albums.");
       } else {
         console.error("Supabase insert error:", error);
       }
     } else {
-      console.log("Supabase insert data:", data);
       setAlbums((prev) => [...prev, data[0]]);
       setSearchTerm("");
       setSearchResults([]);
       setDropdownOpen(false);
+    }
+  }
+
+  // Delete album with confirmation
+  async function deleteAlbum(albumId, albumName) {
+    const confirmed = window.confirm(`Delete "${albumName}" from your top albums?`);
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("user_albums")
+      .delete()
+      .eq("id", albumId)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      console.error("Error deleting album:", error);
+    } else {
+      setAlbums((prev) => prev.filter((a) => a.id !== albumId));
     }
   }
 
@@ -124,11 +140,29 @@ export default function Home() {
               padding: "0.5rem",
               background: "#fff",
               textAlign: "center",
+              position: "relative",
             }}
           >
             {a.album_image && <img src={a.album_image} alt={a.album_name} style={{ width: "100%" }} />}
             <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
             <p style={{ margin: "0", fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
+
+            {/* Delete button */}
+            <button
+              onClick={() => deleteAlbum(a.id, a.album_name)}
+              style={{
+                marginTop: "0.5rem",
+                padding: "0.25rem 0.5rem",
+                background: "#e63946",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+              }}
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>
@@ -137,7 +171,6 @@ export default function Home() {
       <div style={{ marginTop: "2rem" }} ref={searchRef}>
         <h2>Search Spotify Albums</h2>
 
-        {/* 👇 Only show search input if user has fewer than 5 albums */}
         {albums.length < 5 ? (
           <>
             <input
