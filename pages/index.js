@@ -50,7 +50,7 @@ export default function Home() {
     }
   }
 
-  // Add album to Supabase
+  // Add album
   async function addAlbum(album) {
     if (!album) return;
 
@@ -90,11 +90,7 @@ export default function Home() {
       .eq("id", albumId)
       .eq("user_id", session.user.id);
 
-    if (error) {
-      console.error("Error deleting album:", error);
-    } else {
-      setAlbums((prev) => prev.filter((a) => a.id !== albumId));
-    }
+    if (!error) setAlbums((prev) => prev.filter((a) => a.id !== albumId));
   }
 
   // Close dropdown if click outside
@@ -131,7 +127,6 @@ export default function Home() {
       <div className={styles.albumGrid}>
         {albums.map((a) => (
           <div key={a.id} className={styles.albumCard}>
-            {/* Delete cross */}
             <button
               className={styles.deleteButton}
               onClick={() => deleteAlbum(a.id, a.album_name)}
@@ -139,7 +134,6 @@ export default function Home() {
             >
               ×
             </button>
-
             {a.album_image && <img src={a.album_image} alt={a.album_name} />}
             <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
             <p style={{ margin: 0, fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
@@ -148,8 +142,8 @@ export default function Home() {
       </div>
 
       {/* Search */}
-      <div style={{ marginTop: "2rem" }} ref={searchRef}>
-        <h2 style={{ color: "#2a4d4f" }}>Search Spotify Albums</h2>
+      <div className={styles.searchContainer} ref={searchRef}>
+        <h2>Search Spotify Albums</h2>
 
         {albums.length < 5 ? (
           <>
@@ -161,39 +155,13 @@ export default function Home() {
                 setSearchTerm(e.target.value);
                 searchAlbums(e.target.value);
               }}
-              style={{ width: "100%", padding: "0.5rem", fontSize: "1rem", marginBottom: "0.5rem", borderRadius: "8px", border: "1px solid #bbb" }}
+              className={styles.searchInput}
             />
 
             {dropdownOpen && searchResults.length > 0 && (
-              <ul
-                style={{
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  listStyle: "none",
-                  padding: 0,
-                  margin: 0,
-                  maxHeight: "250px",
-                  overflowY: "auto",
-                  background: "#fff",
-                  position: "absolute",
-                  zIndex: 1000,
-                  width: "100%",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                }}
-              >
+              <ul className={styles.searchDropdown}>
                 {searchResults.map((album) => (
-                  <li
-                    key={album.id}
-                    onClick={() => addAlbum(album)}
-                    style={{
-                      cursor: "pointer",
-                      padding: "0.5rem",
-                      borderBottom: "1px solid #eee",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
+                  <li key={album.id} onClick={() => addAlbum(album)}>
                     {album.images[0]?.url && <img src={album.images[0].url} alt={album.name} width={50} />}
                     <span>{album.name} — {album.artists[0]?.name}</span>
                   </li>
