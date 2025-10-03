@@ -8,7 +8,7 @@ export default function Home() {
   const [results, setResults] = useState([]);
   const [myAlbums, setMyAlbums] = useState([]);
 
-  // Load user's saved albums from Supabase
+  // Load user's saved albums
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -33,9 +33,7 @@ export default function Home() {
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(
-          `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-            query
-          )}&type=album&limit=5`,
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=5`,
           { headers: { Authorization: `Bearer ${session.accessToken}` } }
         );
         const data = await res.json();
