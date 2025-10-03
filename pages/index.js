@@ -132,39 +132,56 @@ export default function Home() {
         }}
       >
         {albums.map((a) => (
-          <div
-            key={a.id}
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              padding: "0.5rem",
-              background: "#fff",
-              textAlign: "center",
-              position: "relative",
-            }}
-          >
-            {a.album_image && <img src={a.album_image} alt={a.album_name} style={{ width: "100%" }} />}
-            <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
-            <p style={{ margin: "0", fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
+  <div
+    key={a.id}
+    style={{
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      padding: "0.5rem",
+      background: "#fff",
+      textAlign: "center",
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between", // pushes button down
+      height: "100%", // make all cards equal height in the grid
+    }}
+  >
+    <div>
+      {a.album_image && (
+        <img
+          src={a.album_image}
+          alt={a.album_name}
+          style={{ width: "100%", borderRadius: "6px" }}
+        />
+      )}
+      <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>
+        {a.album_name}
+      </p>
+      <p style={{ margin: "0", fontSize: "0.9rem", color: "#555" }}>
+        {a.artist_name}
+      </p>
+    </div>
 
-            {/* Delete button */}
-            <button
-              onClick={() => deleteAlbum(a.id, a.album_name)}
-              style={{
-                marginTop: "0.5rem",
-                padding: "0.25rem 0.5rem",
-                background: "#e63946",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        ))}
+    {/* Delete button aligned at bottom */}
+    <button
+      onClick={() => deleteAlbum(a.id, a.album_name)}
+      style={{
+        marginTop: "auto",
+        padding: "0.35rem 0.75rem",
+        background: "#e63946",
+        color: "white",
+        border: "none",
+        borderRadius: "4px",
+        cursor: "pointer",
+        fontSize: "0.85rem",
+      }}
+    >
+      Delete
+    </button>
+  </div>
+))}
+
       </div>
 
       {/* Search */}
