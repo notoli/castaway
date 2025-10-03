@@ -1,5 +1,6 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -7,7 +8,21 @@ export default function Home() {
   const [results, setResults] = useState([]);
   const [myAlbums, setMyAlbums] = useState([]);
 
-  // Debounced search
+  // Load user's saved albums from Supabase
+  useEffect(() => {
+    if (!session) return;
+    const fetchAlbums = async () => {
+      const { data } = await supabase
+        .from("user_albums")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: true });
+      setMyAlbums(data || []);
+    };
+    fetchAlbums();
+  }, [session]);
+
+  // Debounced Spotify search
   useEffect(() => {
     if (!query || !session?.accessToken) {
       setResults([]);
@@ -18,11 +33,14 @@ export default function Home() {
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
           query
         )}&type=album&limit=5`,
-        { headers: { Authorization: `Bearer ${session.accessToken}` } }
+        {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        }
       );
       const data = await res.json();
       setResults(data.albums?.items || []);
     }, 300);
+
     return () => clearTimeout(timer);
   }, [query, session]);
 
@@ -48,16 +66,32 @@ export default function Home() {
     );
   }
 
-  const addAlbum = (album) => {
-    // Prevent duplicates
-    if (
-      myAlbums.length < 5 &&
-      !myAlbums.some((a) => a.id === album.id)
-    ) {
-      setMyAlbums([...myAlbums, album]);
-    }
-    setQuery("");
-    setResults([]);
+  // Add album to Supabase and state
+  const addAlbum = async (album) => {
+    if (myAlbums.length >= 5) return;
+    if (myAlbums.some((a) => a.album_id === album.id)) return;
+
+    const { data, error } = await supabase.from("user_albums").insert([
+      {
+        user_id: session.user.id,
+        album_id: album.id,
+        album_name: album.name,
+        artist_name: album.artists[0].name,
+        album_image: album.images[2]?.url || album.images[0]?.url,
+      },
+    ]);
+
+    if (!error) setMyAlbums([...myAlbums, data[0]]);
+  };
+
+  // Remove album from Supabase and state
+  const removeAlbum = async (album) => {
+    const { error } = await supabase
+      .from("user_albums")
+      .delete()
+      .eq("id", album.id);
+
+    if (!error) setMyAlbums(myAlbums.filter((a) => a.id !== album.id));
   };
 
   return (
@@ -147,17 +181,40 @@ export default function Home() {
       <h3 style={{ marginTop: "40px" }}>My Top Albums</h3>
       {myAlbums.length === 0 && <p>No albums chosen yet.</p>}
       {myAlbums.map((a, i) => (
-        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+        <div
+          key={a.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "8px",
+          }}
+        >
           <img
-            src={a.images[2]?.url || a.images[0]?.url}
+            src={a.album_image}
             width="40"
             height="40"
-            alt={a.name}
+            alt={a.album_name}
             style={{ borderRadius: "3px" }}
           />
           <span>
-            {i + 1}. {a.name} – {a.artists[0].name}
+            {i + 1}. {a.album_name} – {a.artist_name}
           </span>
+          <button
+            onClick={() => removeAlbum(a)}
+            style={{
+              marginLeft: "auto",
+              padding: "4px 8px",
+              fontSize: "12px",
+              cursor: "pointer",
+              backgroundColor: "#e0245e",
+              color: "white",
+              border: "none",
+              borderRadius: "3px",
+            }}
+          >
+            Remove
+          </button>
         </div>
       ))}
     </div>
