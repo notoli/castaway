@@ -1,7 +1,7 @@
 // pages/index.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../libs/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 
 const spotifyApi = new SpotifyWebApi();
@@ -11,8 +11,10 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [albums, setAlbums] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const searchRef = useRef(null);
 
-  // Load user's saved albums
+  // Fetch user's saved albums
   useEffect(() => {
     if (session) fetchUserAlbums();
   }, [session]);
@@ -32,6 +34,7 @@ export default function Home() {
   async function searchAlbums(term) {
     if (!term) {
       setSearchResults([]);
+      setDropdownOpen(false);
       return;
     }
 
@@ -40,6 +43,7 @@ export default function Home() {
     try {
       const result = await spotifyApi.searchAlbums(term, { limit: 5 });
       setSearchResults(result.albums.items);
+      setDropdownOpen(true);
     } catch (err) {
       console.error("Spotify search error:", err);
     }
@@ -58,7 +62,7 @@ export default function Home() {
         artist_name: album.artists[0]?.name,
         album_image: album.images[0]?.url || null,
       })
-      .select(); // important to return the inserted row
+      .select(); // returns the inserted row
 
     if (error) {
       console.error("Supabase insert error:", error);
@@ -67,8 +71,20 @@ export default function Home() {
       setAlbums(prev => [...prev, data[0]]);
       setSearchTerm("");
       setSearchResults([]);
+      setDropdownOpen(false);
     }
   }
+
+  // Close dropdown if click outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!session) {
     return (
@@ -113,7 +129,7 @@ export default function Home() {
       </div>
 
       {/* Search */}
-      <div style={{ marginTop: "2rem" }}>
+      <div style={{ marginTop: "2rem" }} ref={searchRef}>
         <h2>Search Spotify Albums</h2>
         <input
           type="text"
@@ -126,7 +142,7 @@ export default function Home() {
           style={{ width: "100%", padding: "0.5rem", fontSize: "1rem", marginBottom: "0.5rem" }}
         />
 
-        {searchResults.length > 0 && (
+        {dropdownOpen && searchResults.length > 0 && (
           <ul
             style={{
               border: "1px solid #ccc",
@@ -136,6 +152,10 @@ export default function Home() {
               margin: 0,
               maxHeight: "250px",
               overflowY: "auto",
+              background: "#fff",
+              position: "absolute",
+              zIndex: 1000,
+              width: "100%",
             }}
           >
             {searchResults.map(album => (
