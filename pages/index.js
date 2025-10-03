@@ -1,5 +1,5 @@
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Home() {
@@ -7,6 +7,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [myAlbums, setMyAlbums] = useState([]);
+  const dropdownRef = useRef(null);
 
   // Load user's saved albums
   useEffect(() => {
@@ -46,6 +47,47 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [query, session]);
 
+  // Add album
+  const addAlbum = async (album) => {
+    console.log("Clicked album:", album);
+    if (!session?.user?.id) return;
+    if (myAlbums.length >= 5) return;
+    if (myAlbums.some((a) => a.album_id === album.id)) return;
+
+    const { data, error } = await supabase.from("user_albums").insert([
+      {
+        user_id: session.user.id,
+        album_id: album.id,
+        album_name: album.name,
+        artist_name: album.artists[0].name,
+        album_image: album.images[2]?.url || album.images[0]?.url,
+      },
+    ]);
+
+    if (error) console.error("Supabase insert error:", error);
+    if (data) setMyAlbums([...myAlbums, data[0]]);
+    setQuery(""); // clear input after selecting
+    setResults([]);
+  };
+
+  // Remove album
+  const removeAlbum = async (album) => {
+    if (!album.id) return;
+    const { error } = await supabase.from("user_albums").delete().eq("id", album.id);
+    if (!error) setMyAlbums(myAlbums.filter((a) => a.id !== album.id));
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setResults([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (!session) {
     return (
       <div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -67,31 +109,6 @@ export default function Home() {
       </div>
     );
   }
-
-  const addAlbum = async (album) => {
-    if (!session?.user?.id) return;
-    if (myAlbums.length >= 5) return;
-    if (myAlbums.some((a) => a.album_id === album.id)) return;
-
-    const { data, error } = await supabase.from("user_albums").insert([
-      {
-        user_id: session.user.id,
-        album_id: album.id,
-        album_name: album.name,
-        artist_name: album.artists[0].name,
-        album_image: album.images[2]?.url || album.images[0]?.url,
-      },
-    ]);
-
-    if (!error && data) setMyAlbums([...myAlbums, data[0]]);
-  };
-
-  const removeAlbum = async (album) => {
-    if (!album.id) return;
-
-    const { error } = await supabase.from("user_albums").delete().eq("id", album.id);
-    if (!error) setMyAlbums(myAlbums.filter((a) => a.id !== album.id));
-  };
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
@@ -115,7 +132,7 @@ export default function Home() {
       </div>
 
       <h2>Choose Your Top 5 Albums</h2>
-      <div style={{ position: "relative" }}>
+      <div style={{ position: "relative" }} ref={dropdownRef}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -142,7 +159,7 @@ export default function Home() {
               position: "absolute",
               width: "100%",
               backgroundColor: "white",
-              zIndex: 10,
+              zIndex: 50,
             }}
           >
             {results.map((album) => (
