@@ -1,7 +1,7 @@
 // pages/index.js
 import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { supabase } from "../libs/supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 
 const spotifyApi = new SpotifyWebApi();
