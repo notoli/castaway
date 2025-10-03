@@ -9,22 +9,29 @@ export default function Home() {
   const [myAlbums, setMyAlbums] = useState([]);
   const dropdownRef = useRef(null);
 
+  // -----------------------------
   // Load user's saved albums
+  // -----------------------------
   useEffect(() => {
     if (!session?.user?.id) return;
 
     const fetchAlbums = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_albums")
         .select("*")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: true });
-      setMyAlbums(data || []);
+
+      if (error) console.error("Supabase fetch error:", error);
+      if (data) setMyAlbums(data);
     };
+
     fetchAlbums();
   }, [session]);
 
+  // -----------------------------
   // Debounced Spotify search
+  // -----------------------------
   useEffect(() => {
     if (!query || !session?.accessToken) {
       setResults([]);
@@ -47,8 +54,10 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [query, session]);
 
+  // -----------------------------
   // Add album
-   const addAlbum = async (album) => {
+  // -----------------------------
+  const addAlbum = async (album) => {
     console.log("Clicked album:", album);
 
     if (!session?.user?.id) {
@@ -79,17 +88,26 @@ export default function Home() {
     console.log("Supabase insert data:", data);
     console.log("Supabase insert error:", error);
 
-    if (data) setMyAlbums([...myAlbums, data[0]]);
+    if (data) {
+      setMyAlbums([...myAlbums, data[0]]);
+      setQuery(""); // clear input
+      setResults([]); // close dropdown
+    }
   };
 
+  // -----------------------------
   // Remove album
+  // -----------------------------
   const removeAlbum = async (album) => {
     if (!album.id) return;
     const { error } = await supabase.from("user_albums").delete().eq("id", album.id);
     if (!error) setMyAlbums(myAlbums.filter((a) => a.id !== album.id));
+    else console.error("Supabase delete error:", error);
   };
 
+  // -----------------------------
   // Close dropdown on outside click
+  // -----------------------------
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -100,6 +118,9 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // -----------------------------
+  // Render
+  // -----------------------------
   if (!session) {
     return (
       <div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -145,71 +166,70 @@ export default function Home() {
 
       <h2>Choose Your Top 5 Albums</h2>
       <div style={{ position: "relative", overflow: "visible" }} ref={dropdownRef}>
-  <input
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-    placeholder="Search for an album..."
-    style={{
-      width: "100%",
-      padding: "10px",
-      fontSize: "14px",
-      border: "1px solid #ccc",
-      borderRadius: "4px",
-    }}
-  />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search for an album..."
+          style={{
+            width: "100%",
+            padding: "10px",
+            fontSize: "14px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+          }}
+        />
 
-  {results.length > 0 && (
-    <ul
-      style={{
-        listStyle: "none",
-        margin: 0,
-        padding: 0,
-        border: "1px solid #ccc",
-        borderTop: "none",
-        maxHeight: "200px",
-        overflowY: "auto",
-        position: "absolute",
-        width: "100%",
-        backgroundColor: "white",
-        zIndex: 999,
-      }}
-    >
-      {results.map((album) => (
-        <li key={album.id} style={{ padding: 0 }}>
-          <button
-            onClick={() => addAlbum(album)}
+        {results.length > 0 && (
+          <ul
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "6px",
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              border: "1px solid #ccc",
+              borderTop: "none",
+              maxHeight: "200px",
+              overflowY: "auto",
+              position: "absolute",
               width: "100%",
-              textAlign: "left",
-              border: "none",
-              background: "white",
-              cursor: "pointer",
+              backgroundColor: "white",
+              zIndex: 999,
             }}
           >
-            <img
-              src={album.images[2]?.url || album.images[0]?.url}
-              width="40"
-              height="40"
-              alt={album.name}
-              style={{ borderRadius: "3px" }}
-            />
-            <div style={{ flex: "1" }}>
-              <strong>{album.name}</strong>
-              <div style={{ fontSize: "12px", color: "#666" }}>
-                {album.artists[0].name}
-              </div>
-            </div>
-          </button>
-        </li>
-      ))}
-    </ul>
-  )}
-</div>
-
+            {results.map((album) => (
+              <li key={album.id} style={{ padding: 0 }}>
+                <button
+                  onClick={() => addAlbum(album)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "6px",
+                    width: "100%",
+                    textAlign: "left",
+                    border: "none",
+                    background: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  <img
+                    src={album.images[2]?.url || album.images[0]?.url}
+                    width="40"
+                    height="40"
+                    alt={album.name}
+                    style={{ borderRadius: "3px" }}
+                  />
+                  <div style={{ flex: "1" }}>
+                    <strong>{album.name}</strong>
+                    <div style={{ fontSize: "12px", color: "#666" }}>
+                      {album.artists[0].name}
+                    </div>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <h3 style={{ marginTop: "40px" }}>My Top Albums</h3>
       {myAlbums.length === 0 && <p>No albums chosen yet.</p>}
