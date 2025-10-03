@@ -44,11 +44,12 @@
   text-align: center;
   position: relative;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .albumCard:hover {
-  transform: scale(1.03);
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .deleteButton {
@@ -60,16 +61,22 @@
   font-size: 1.2rem;
   color: #888;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s, transform 0.2s;
 }
 
 .deleteButton:hover {
   color: #e76f51;
+  transform: scale(1.2);
 }
 
 .albumCard img {
   width: 100%;
   border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.albumCard img:hover {
+  transform: translateY(-3px);
 }
 
 /* Search section */
@@ -117,4 +124,11 @@
 
 .searchDropdown li:hover {
   background: #f0f0f0;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.05);
+}
+
+.searchInput:focus {
+  border-color: #2a4d4f;
+  box-shadow: 0 0 5px rgba(42,77,79,0.3);
+  outline: none;
 }
