@@ -1,6 +1,7 @@
 // pages/index.js
 import { useState, useEffect, useRef } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
@@ -9,11 +10,18 @@ const spotifyApi = new SpotifyWebApi();
 
 export default function Home() {
   const { data: session } = useSession();
+  const router = useRouter();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchRef = useRef(null);
+
+  // Redirect to login if not logged in
+  useEffect(() => {
+    if (!session) router.push("/login");
+  }, [session]);
 
   // Fetch user's saved albums
   useEffect(() => {
@@ -104,15 +112,8 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!session) {
-    return (
-      <div className={styles.container} style={{ textAlign: "center", paddingTop: "2rem" }}>
-        <button className={styles.signoutButton} onClick={() => signIn("spotify")}>
-          Sign in with Spotify
-        </button>
-      </div>
-    );
-  }
+  // If session is not loaded yet, don’t render anything
+  if (!session) return null;
 
   return (
     <div className={styles.container}>
