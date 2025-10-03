@@ -1,7 +1,7 @@
 // pages/index.js
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { supabase } from "../lib/supabaseClient"; // your Supabase client
+import { supabase } from "../libs/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 
 const spotifyApi = new SpotifyWebApi();
@@ -14,16 +14,15 @@ export default function Home() {
 
   // Load user's saved albums
   useEffect(() => {
-    if (session) {
-      fetchUserAlbums();
-    }
+    if (session) fetchUserAlbums();
   }, [session]);
 
   async function fetchUserAlbums() {
     const { data, error } = await supabase
       .from("user_albums")
       .select("*")
-      .eq("user_id", session.user.id);
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false });
 
     if (error) console.error("Error fetching albums:", error);
     else setAlbums(data);
@@ -36,7 +35,6 @@ export default function Home() {
       return;
     }
 
-    // Set your access token
     spotifyApi.setAccessToken(session.accessToken);
 
     try {
@@ -49,6 +47,8 @@ export default function Home() {
 
   // Add album to Supabase
   async function addAlbum(album) {
+    if (!album) return;
+
     const { data, error } = await supabase
       .from("user_albums")
       .insert({
@@ -58,7 +58,7 @@ export default function Home() {
         artist_name: album.artists[0]?.name,
         album_image: album.images[0]?.url || null,
       })
-      .select(); // Return the inserted row
+      .select(); // important to return the inserted row
 
     if (error) {
       console.error("Supabase insert error:", error);
@@ -72,52 +72,96 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div>
+      <div style={{ textAlign: "center", marginTop: "2rem" }}>
         <button onClick={() => signIn("spotify")}>Sign in with Spotify</button>
       </div>
     );
   }
 
   return (
-    <div>
-      <button onClick={() => signOut()}>Sign out</button>
+    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Your Top Albums</h1>
+        <button onClick={() => signOut()}>Sign out</button>
+      </div>
 
-      <h1>Your Top Albums</h1>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+      {/* Saved albums */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+          gap: "1rem",
+          marginTop: "1rem",
+        }}
+      >
         {albums.map(a => (
-          <div key={a.id} style={{ border: "1px solid #ccc", padding: "0.5rem" }}>
-            {a.album_image && <img src={a.album_image} alt={a.album_name} width={100} />}
-            <p>{a.album_name}</p>
-            <p>{a.artist_name}</p>
+          <div
+            key={a.id}
+            style={{
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              padding: "0.5rem",
+              background: "#fff",
+              textAlign: "center",
+            }}
+          >
+            {a.album_image && <img src={a.album_image} alt={a.album_name} style={{ width: "100%" }} />}
+            <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
+            <p style={{ margin: "0", fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
           </div>
         ))}
       </div>
 
-      <h2>Search Spotify Albums</h2>
-      <input
-        type="text"
-        value={searchTerm}
-        placeholder="Search albums..."
-        onChange={e => {
-          setSearchTerm(e.target.value);
-          searchAlbums(e.target.value);
-        }}
-      />
+      {/* Search */}
+      <div style={{ marginTop: "2rem" }}>
+        <h2>Search Spotify Albums</h2>
+        <input
+          type="text"
+          value={searchTerm}
+          placeholder="Search albums..."
+          onChange={e => {
+            setSearchTerm(e.target.value);
+            searchAlbums(e.target.value);
+          }}
+          style={{ width: "100%", padding: "0.5rem", fontSize: "1rem", marginBottom: "0.5rem" }}
+        />
 
-      {searchResults.length > 0 && (
-        <ul style={{ border: "1px solid #ccc", padding: 0, listStyle: "none" }}>
-          {searchResults.map(album => (
-            <li
-              key={album.id}
-              onClick={() => addAlbum(album)}
-              style={{ cursor: "pointer", padding: "0.5rem", borderBottom: "1px solid #eee" }}
-            >
-              <img src={album.images[0]?.url} alt={album.name} width={50} style={{ marginRight: "0.5rem" }} />
-              {album.name} — {album.artists[0]?.name}
-            </li>
-          ))}
-        </ul>
-      )}
+        {searchResults.length > 0 && (
+          <ul
+            style={{
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+              maxHeight: "250px",
+              overflowY: "auto",
+            }}
+          >
+            {searchResults.map(album => (
+              <li
+                key={album.id}
+                onClick={() => addAlbum(album)}
+                style={{
+                  cursor: "pointer",
+                  padding: "0.5rem",
+                  borderBottom: "1px solid #eee",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                {album.images[0]?.url && (
+                  <img src={album.images[0].url} alt={album.name} width={50} />
+                )}
+                <span>
+                  {album.name} — {album.artists[0]?.name}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
