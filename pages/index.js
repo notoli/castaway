@@ -65,10 +65,15 @@ export default function Home() {
       .select(); // returns the inserted row
 
     if (error) {
-      console.error("Supabase insert error:", error);
+      // 👇 Friendly error if trigger blocks the insert
+      if (error.message.includes("You can only add up to 5 albums")) {
+        alert("You can only add up to 5 albums.");
+      } else {
+        console.error("Supabase insert error:", error);
+      }
     } else {
       console.log("Supabase insert data:", data);
-      setAlbums(prev => [...prev, data[0]]);
+      setAlbums((prev) => [...prev, data[0]]);
       setSearchTerm("");
       setSearchResults([]);
       setDropdownOpen(false);
@@ -110,7 +115,7 @@ export default function Home() {
           marginTop: "1rem",
         }}
       >
-        {albums.map(a => (
+        {albums.map((a) => (
           <div
             key={a.id}
             style={{
@@ -131,55 +136,63 @@ export default function Home() {
       {/* Search */}
       <div style={{ marginTop: "2rem" }} ref={searchRef}>
         <h2>Search Spotify Albums</h2>
-        <input
-          type="text"
-          value={searchTerm}
-          placeholder="Search albums..."
-          onChange={e => {
-            setSearchTerm(e.target.value);
-            searchAlbums(e.target.value);
-          }}
-          style={{ width: "100%", padding: "0.5rem", fontSize: "1rem", marginBottom: "0.5rem" }}
-        />
 
-        {dropdownOpen && searchResults.length > 0 && (
-          <ul
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              listStyle: "none",
-              padding: 0,
-              margin: 0,
-              maxHeight: "250px",
-              overflowY: "auto",
-              background: "#fff",
-              position: "absolute",
-              zIndex: 1000,
-              width: "100%",
-            }}
-          >
-            {searchResults.map(album => (
-              <li
-                key={album.id}
-                onClick={() => addAlbum(album)}
+        {/* 👇 Only show search input if user has fewer than 5 albums */}
+        {albums.length < 5 ? (
+          <>
+            <input
+              type="text"
+              value={searchTerm}
+              placeholder="Search albums..."
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                searchAlbums(e.target.value);
+              }}
+              style={{ width: "100%", padding: "0.5rem", fontSize: "1rem", marginBottom: "0.5rem" }}
+            />
+
+            {dropdownOpen && searchResults.length > 0 && (
+              <ul
                 style={{
-                  cursor: "pointer",
-                  padding: "0.5rem",
-                  borderBottom: "1px solid #eee",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  maxHeight: "250px",
+                  overflowY: "auto",
+                  background: "#fff",
+                  position: "absolute",
+                  zIndex: 1000,
+                  width: "100%",
                 }}
               >
-                {album.images[0]?.url && (
-                  <img src={album.images[0].url} alt={album.name} width={50} />
-                )}
-                <span>
-                  {album.name} — {album.artists[0]?.name}
-                </span>
-              </li>
-            ))}
-          </ul>
+                {searchResults.map((album) => (
+                  <li
+                    key={album.id}
+                    onClick={() => addAlbum(album)}
+                    style={{
+                      cursor: "pointer",
+                      padding: "0.5rem",
+                      borderBottom: "1px solid #eee",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    {album.images[0]?.url && (
+                      <img src={album.images[0].url} alt={album.name} width={50} />
+                    )}
+                    <span>
+                      {album.name} — {album.artists[0]?.name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <p>You’ve reached the maximum of 5 albums.</p>
         )}
       </div>
     </div>
