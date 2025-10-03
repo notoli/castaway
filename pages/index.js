@@ -48,11 +48,23 @@ export default function Home() {
   }, [query, session]);
 
   // Add album
-  const addAlbum = async (album) => {
+   const addAlbum = async (album) => {
     console.log("Clicked album:", album);
-    if (!session?.user?.id) return;
-    if (myAlbums.length >= 5) return;
-    if (myAlbums.some((a) => a.album_id === album.id)) return;
+
+    if (!session?.user?.id) {
+      console.log("No session.user.id! Current session.user:", session.user);
+      return;
+    }
+
+    if (myAlbums.length >= 5) {
+      console.log("Top 5 albums reached");
+      return;
+    }
+
+    if (myAlbums.some((a) => a.album_id === album.id)) {
+      console.log("Album already added");
+      return;
+    }
 
     const { data, error } = await supabase.from("user_albums").insert([
       {
@@ -64,10 +76,10 @@ export default function Home() {
       },
     ]);
 
-    if (error) console.error("Supabase insert error:", error);
+    console.log("Supabase insert data:", data);
+    console.log("Supabase insert error:", error);
+
     if (data) setMyAlbums([...myAlbums, data[0]]);
-    setQuery(""); // clear input after selecting
-    setResults([]);
   };
 
   // Remove album
