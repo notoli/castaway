@@ -1,6 +1,5 @@
-// pages/login.js
 import { signIn } from "next-auth/react";
-import styles from "../styles/Home.module.css";
+import styles from "../styles/Login.module.css";
 
 export default function Login() {
   return (
@@ -11,7 +10,9 @@ export default function Login() {
       </p>
       <button
         className={styles.loginButton}
-        onClick={() => signIn("spotify")}
+        onClick={() =>
+          signIn("spotify", { callbackUrl: "/" })
+        }
       >
         Sign in with Spotify
       </button>
