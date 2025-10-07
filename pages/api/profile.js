@@ -1,7 +1,6 @@
-// pages/api/profile.js
-import { supabase } from "../../lib/supabaseClient";
+import { authOptions } from "./auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "/auth/[...nextauth]";
+import { supabase } from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);

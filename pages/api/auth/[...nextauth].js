@@ -1,4 +1,4 @@
-export default NextAuth({
+export const authOptions = {
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID,
@@ -19,9 +19,7 @@ export default NextAuth({
           image: user.image,
         };
       }
-
       if (Date.now() < token.accessTokenExpires) return token;
-
       return await refreshAccessToken(token);
     },
     async session({ session, token }) {
@@ -33,4 +31,6 @@ export default NextAuth({
       return session;
     },
   },
-});
+};
+
+export default NextAuth(authOptions);
