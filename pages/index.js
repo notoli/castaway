@@ -5,8 +5,8 @@ import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
-import { DarkModeContext } from "./_app";
 import Header from "../components/Header";
+import { DarkModeContext } from "./_app";
 
 const spotifyApi = new SpotifyWebApi();
 
@@ -23,55 +23,49 @@ export default function Home() {
 
   const searchRef = useRef(null);
 
-  // Redirect if unauthenticated
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Fetch user's albums
   useEffect(() => {
     if (!session?.user) return;
 
     const fetchAlbums = async () => {
       setLoadingAlbums(true);
-      const { data: albumsData, error: albumsError } = await supabase
+      const { data, error } = await supabase
         .from("user_albums")
         .select("*")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
-
-      if (albumsError) console.error("Error fetching albums:", albumsError);
-      else setAlbums(albumsData || []);
+      if (error) console.error(error);
+      else setAlbums(data || []);
       setLoadingAlbums(false);
     };
 
     fetchAlbums();
   }, [session]);
 
-  // Spotify search
   async function searchAlbums(term) {
     if (!term || !session?.accessToken) {
       setSearchResults([]);
       setDropdownOpen(false);
       return;
     }
-
     spotifyApi.setAccessToken(session.accessToken);
-
     try {
       const result = await spotifyApi.searchAlbums(term, { limit: 5 });
       setSearchResults(result.albums.items);
       setDropdownOpen(true);
     } catch (err) {
-      console.error("Spotify search error:", err);
+      console.error(err);
     }
   }
 
-  // Add album
   async function addAlbum(album) {
     if (!album || !session) return;
     if (albums.length >= 5) return alert("You can only add up to 5 albums.");
-    if (albums.some((a) => a.album_id === album.id)) return alert("You already added this album!");
+    if (albums.some((a) => a.album_id === album.id))
+      return alert("You already added this album!");
 
     const { data, error } = await supabase
       .from("user_albums")
@@ -84,7 +78,7 @@ export default function Home() {
       })
       .select();
 
-    if (error) console.error("Supabase insert error:", error);
+    if (error) console.error(error);
     else {
       setAlbums((prev) => [...prev, data[0]]);
       setSearchTerm("");
@@ -93,23 +87,20 @@ export default function Home() {
     }
   }
 
-  // Delete album
   async function deleteAlbum(albumId, albumName) {
     if (!window.confirm(`Delete "${albumName}" from your top albums?`)) return;
-
     const { error } = await supabase
       .from("user_albums")
       .delete()
       .eq("id", albumId)
       .eq("user_id", session.user.id);
-
     if (!error) setAlbums((prev) => prev.filter((a) => a.id !== albumId));
   }
 
-  // Close dropdown if click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) setDropdownOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target))
+        setDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -118,10 +109,14 @@ export default function Home() {
   if (status === "loading" || !session) return null;
 
   return (
-    <div className={`${styles.container} ${darkMode ? "dark" : ""}`} style={{ transition: "background 0.3s, color 0.3s" }}>
-      <Header mainTitle="Your Albums" pageTitle="My Albums" />
+    <div className={`${styles.container} ${darkMode ? "dark" : ""}`}>
+      <Header
+        mainTitle="Your Albums"
+        pageTitle="My Albums"
+        currentPath={router.pathname}
+        userId={session.user.id}
+      />
 
-      {/* Saved albums */}
       {loadingAlbums ? (
         <p>Loading your albums…</p>
       ) : (
@@ -136,14 +131,17 @@ export default function Home() {
                 ×
               </button>
               {a.album_image && <img src={a.album_image} alt={a.album_name} />}
-              <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
-              <p style={{ margin: 0, fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
+              <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>
+                {a.album_name}
+              </p>
+              <p style={{ margin: 0, fontSize: "0.9rem", color: "#555" }}>
+                {a.artist_name}
+              </p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Search */}
       <div className={styles.searchContainer} ref={searchRef}>
         <h2>Search Spotify Albums</h2>
         {albums.length < 5 ? (
@@ -162,7 +160,9 @@ export default function Home() {
               <ul className={styles.searchDropdown}>
                 {searchResults.map((album) => (
                   <li key={album.id} onClick={() => addAlbum(album)}>
-                    {album.images[0]?.url && <img src={album.images[0].url} alt={album.name} width={50} />}
+                    {album.images[0]?.url && (
+                      <img src={album.images[0].url} alt={album.name} width={50} />
+                    )}
                     <span>
                       {album.name} — {album.artists[0]?.name}
                     </span>
