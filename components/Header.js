@@ -11,78 +11,71 @@ export default function Header({ mainTitle, pageTitle, currentPath, userId }) {
   const { data: session } = useSession();
 
   return (
-    <div className={styles.header}>
-      <h1>{mainTitle}</h1>
+    <div className={styles.headerContainer}>
+      {/* Top row: main title + buttons */}
+      <div className={styles.headerTop}>
+        <h1>{mainTitle}</h1>
 
-      <div className={styles.headerButtons}>
-        {session && (
-          <>
-            {/* Back button for profile pages */}
-            {currentPath.startsWith("/profile/") && (
+        <div className={styles.headerButtons}>
+          {session && (
+            <>
+              {currentPath.startsWith("/profile/") && (
+                <button
+                  className={styles.signoutButton}
+                  onClick={() => router.push("/community")}
+                >
+                  Back
+                </button>
+              )}
+
+              {currentPath !== "/community" && (
+                <button
+                  className={styles.signoutButton}
+                  onClick={() => router.push("/community")}
+                >
+                  Community
+                </button>
+              )}
+
+              {currentPath !== "/" && (
+                <button
+                  className={styles.signoutButton}
+                  onClick={() => router.push("/")}
+                >
+                  My Albums
+                </button>
+              )}
+
+              {userId && !currentPath.startsWith(`/profile/${userId}`) && (
+                <button
+                  className={styles.signoutButton}
+                  onClick={() => router.push(`/profile/${userId}`)}
+                >
+                  My Profile
+                </button>
+              )}
+
               <button
                 className={styles.signoutButton}
-                onClick={() => router.push("/community")}
-                style={{ marginRight: "1rem" }}
+                onClick={() => signOut()}
               >
-                Back
+                Sign out
               </button>
-            )}
 
-            {/* Show Community button if not already on /community */}
-            {currentPath !== "/community" && (
               <button
-                className={styles.signoutButton}
-                onClick={() => router.push("/community")}
-                style={{ marginRight: "1rem" }}
+                className={styles.darkModeButton}
+                onClick={toggleDarkMode}
               >
-                Community
+                {darkMode ? "Dark Mode On" : "Dark Mode Off"}
               </button>
-            )}
-
-            {/* Show My Albums button if not already on / */}
-            {currentPath !== "/" && (
-              <button
-                className={styles.signoutButton}
-                onClick={() => router.push("/")}
-                style={{ marginRight: "1rem" }}
-              >
-                My Albums
-              </button>
-            )}
-
-            {/* Show My Profile button if user is logged in and not on their profile */}
-            {userId && !currentPath.startsWith(`/profile/${userId}`) && (
-              <button
-                className={styles.signoutButton}
-                onClick={() => router.push(`/profile/${userId}`)}
-                style={{ marginRight: "1rem" }}
-              >
-                My Profile
-              </button>
-            )}
-
-            <button
-              className={styles.signoutButton}
-              onClick={() => signOut()}
-              style={{ marginRight: "1rem" }}
-            >
-              Sign out
-            </button>
-
-            <button
-              className={styles.darkModeButton}
-              onClick={toggleDarkMode}
-            >
-              {darkMode ? "Dark Mode On" : "Dark Mode Off"}
-            </button>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
-      <hr style={{ width: "100%", margin: "0.5rem 0", borderColor: "#ccc" }} />
-      <h2 style={{ marginTop: "0.5rem", fontWeight: "normal", color: "#555" }}>
-        {pageTitle}
-      </h2>
+      {/* Bottom row: line + page subtitle */}
+      <hr className={styles.headerLine} />
+      <h2 className={styles.pageTitle}>{pageTitle}</h2>
     </div>
   );
 }
