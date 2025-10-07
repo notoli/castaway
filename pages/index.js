@@ -23,23 +23,7 @@ export default function Home() {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Upsert user profile in Supabase after login
-  useEffect(() => {
-    if (!session?.user) return;
-
-    const upsertProfile = async () => {
-      const { error } = await supabase.from("profiles").upsert({
-        id: session.user.id,
-        name: session.user.name || "",
-        image: session.user.image || null,
-      });
-      if (error) console.error("Error upserting profile:", error);
-    };
-
-    upsertProfile();
-  }, [session]);
-
-  // Fetch user's saved albums
+  // Fetch user's saved albums when session is available
   useEffect(() => {
     if (session) fetchUserAlbums();
   }, [session]);
