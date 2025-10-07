@@ -46,15 +46,6 @@ export default function Header({ mainTitle, pageTitle, currentPath, userId }) {
                 </button>
               )}
 
-              {userId && !currentPath.startsWith(`/profile/${userId}`) && (
-                <button
-                  className={styles.signoutButton}
-                  onClick={() => router.push(`/profile/${userId}`)}
-                >
-                  My Profile
-                </button>
-              )}
-
               <button
                 className={styles.signoutButton}
                 onClick={() => signOut()}
