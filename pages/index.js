@@ -58,9 +58,20 @@ export default function Home() {
     }
   }
 
-  // Add album
+  // Add album with max 5 and duplicate check
   async function addAlbum(album) {
     if (!album) return;
+
+    if (albums.length >= 5) {
+      alert("You can only add up to 5 albums.");
+      return;
+    }
+
+    // Prevent duplicate
+    if (albums.some((a) => a.album_id === album.id)) {
+      alert("You already added this album!");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("user_albums")
@@ -74,11 +85,7 @@ export default function Home() {
       .select();
 
     if (error) {
-      if (error.message.includes("You can only add up to 5 albums")) {
-        alert("You can only add up to 5 albums.");
-      } else {
-        console.error("Supabase insert error:", error);
-      }
+      console.error("Supabase insert error:", error);
     } else {
       setAlbums((prev) => [...prev, data[0]]);
       setSearchTerm("");
@@ -170,7 +177,9 @@ export default function Home() {
               <ul className={styles.searchDropdown}>
                 {searchResults.map((album) => (
                   <li key={album.id} onClick={() => addAlbum(album)}>
-                    {album.images[0]?.url && <img src={album.images[0].url} alt={album.name} width={50} />}
+                    {album.images[0]?.url && (
+                      <img src={album.images[0].url} alt={album.name} width={50} />
+                    )}
                     <span>
                       {album.name} — {album.artists[0]?.name}
                     </span>
