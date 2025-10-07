@@ -32,8 +32,8 @@ useEffect(() => {
 function toggleDarkMode() {
   const newMode = !darkMode;
   setDarkMode(newMode);
-  document.body.classList.toggle("dark", newMode);
   localStorage.setItem("darkMode", newMode);
+  console.log("Dark mode:", newMode);
 }
 
   const searchRef = useRef(null);
@@ -173,7 +173,7 @@ function toggleDarkMode() {
   if (status === "loading" || !session) return null;
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${darkMode ? "dark" : ""}`}>
       {/* Header with Community & Sign out */}
 <div className={styles.header}>
   <h1>Your Albums</h1>
