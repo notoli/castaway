@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
+import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
 import Link from "next/link";
+
+const spotifyApi = new SpotifyWebApi();
 
 export default function Community() {
   const { data: session, status } = useSession();
@@ -18,31 +21,58 @@ export default function Community() {
     }
   }, [status, router]);
 
-  // Fetch profiles with top albums
+  // Fetch profiles with top albums and dynamically get Spotify avatars
   useEffect(() => {
-    if (session) fetchProfiles();
+    if (session) {
+      spotifyApi.setAccessToken(session.accessToken);
+      fetchProfiles();
+    }
   }, [session]);
 
   async function fetchProfiles() {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(`
-        id,
-        name,
-        image,
-        user_albums (
-          album_id,
-          album_name,
-          artist_name,
-          album_image
-        )
-      `)
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(`
+          id,
+          name,
+          image,
+          user_albums (
+            album_id,
+            album_name,
+            artist_name,
+            album_image
+          )
+        `)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching profiles:", error);
-    } else {
-      setUsers(data);
+      if (error) throw error;
+
+      const updatedUsers = await Promise.all(
+        data.map(async (user) => {
+          // If no image, try fetching from Spotify
+          if (!user.image) {
+            try {
+              const spotifyUser = await spotifyApi.getUser(user.id);
+              if (spotifyUser?.images?.[0]?.url) {
+                // Update Supabase
+                await supabase
+                  .from("profiles")
+                  .update({ image: spotifyUser.images[0].url })
+                  .eq("id", user.id);
+                user.image = spotifyUser.images[0].url;
+              }
+            } catch (err) {
+              console.warn(`Could not fetch Spotify avatar for ${user.name}:`, err);
+            }
+          }
+          return user;
+        })
+      );
+
+      setUsers(updatedUsers);
+    } catch (err) {
+      console.error("Error fetching profiles:", err);
     }
   }
 
@@ -87,7 +117,14 @@ export default function Community() {
               <p style={{ fontWeight: "bold", color: "#2a4d4f" }}>{user.name}</p>
 
               {/* Show up to 3 album previews */}
-              <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "0.5rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  justifyContent: "center",
+                  marginTop: "0.5rem",
+                }}
+              >
                 {user.user_albums?.slice(0, 3).map((album) => (
                   <img
                     key={album.album_id}
