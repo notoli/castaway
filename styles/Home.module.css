@@ -134,3 +134,81 @@
   box-shadow: 0 0 5px rgba(42,77,79,0.3);
   outline: none;
 }
+
+/* 🌙 DARK MODE — refined for contrast and theme balance */
+.dark .container {
+  background: linear-gradient(to bottom, #0b1a1d, #142f30); /* deep sea gradient */
+  color: #eae3d2; /* light sand text */
+}
+
+.dark .header h1 {
+  color: #f3dfc1; /* soft sand-gold headline */
+}
+
+/* Buttons */
+.dark .signoutButton {
+  background: #e76f51; /* coral sand */
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.dark .signoutButton:hover {
+  background: #f2845c;
+}
+
+/* Album cards */
+.dark .albumCard {
+  background: #1b2b2c; /* dark teal card base */
+  border: 1px solid #285355; /* subtle sea-edge border */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.dark .albumCard:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.7);
+}
+
+.dark .albumCard p {
+  color: #eae3d2;
+}
+
+.dark .deleteButton {
+  color: #aaa;
+}
+
+.dark .deleteButton:hover {
+  color: #ff8666; /* warm coral tone */
+}
+
+/* Search section */
+.dark .searchContainer h2 {
+  color: #f3dfc1;
+}
+
+.dark .searchInput {
+  background: #1b2b2c;
+  border: 1px solid #285355;
+  color: #f5f5f5;
+}
+
+.dark .searchInput:focus {
+  border-color: #f4a261; /* sandy focus */
+  box-shadow: 0 0 6px rgba(244,162,97,0.4);
+  outline: none;
+}
+
+.dark .searchDropdown {
+  background: #1b2b2c;
+  border: 1px solid #2f5e60;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+}
+
+.dark .searchDropdown li {
+  color: #f0ede8;
+  border-bottom: 1px solid #2a4d4f;
+}
+
+.dark .searchDropdown li:hover {
+  background: #244243; /* soft teal hover */
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4);
+}

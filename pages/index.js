@@ -18,6 +18,24 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+const [darkMode, setDarkMode] = useState(false);
+
+// Load saved preference
+useEffect(() => {
+  const saved = localStorage.getItem("darkMode") === "true";
+  setDarkMode(saved);
+  if (saved) document.body.classList.add("dark");
+}, []);
+
+// Toggle dark mode
+function toggleDarkMode() {
+  const newMode = !darkMode;
+  setDarkMode(newMode);
+  document.body.classList.toggle("dark", newMode);
+  localStorage.setItem("darkMode", newMode);
+}
+
   const searchRef = useRef(null);
 
   // Redirect if unauthenticated
@@ -157,21 +175,28 @@ export default function Home() {
   return (
     <div className={styles.container}>
       {/* Header with Community & Sign out */}
-      <div className={styles.header}>
-        <h1>Your Desert Island Albums</h1>
-        <div>
-          <button
-            className={styles.signoutButton}
-            onClick={() => router.push("/community")}
-            style={{ marginRight: "1rem" }}
-          >
-            🌴 Community
-          </button>
-          <button className={styles.signoutButton} onClick={() => signOut()}>
-            Sign out
-          </button>
-        </div>
-      </div>
+<div className={styles.header}>
+  <h1>Your Albums</h1>
+
+  <div className={styles.headerButtons}>
+    {/* 🌙 Dark mode toggle */}
+    <button onClick={toggleDarkMode} className={styles.toggleWrapper}>
+      <div className={`${styles.toggleCircle} ${darkMode ? styles.active : ""}`}></div>
+    </button>
+
+    {/* Existing buttons */}
+    <button
+      className={styles.signoutButton}
+      onClick={() => router.push("/community")}
+      style={{ marginRight: "1rem" }}
+    >
+      Community
+    </button>
+    <button className={styles.signoutButton} onClick={() => signOut()}>
+      Sign out
+    </button>
+  </div>
+</div>
 
       {/* Saved albums */}
       <div className={styles.albumGrid}>
