@@ -92,21 +92,23 @@ export default function ProfilePage() {
       className={`${styles.container} ${darkMode ? "dark" : ""}`}
       style={{ transition: "background 0.3s, color 0.3s" }}
     >
-      {/* Header */}
-      <div className={styles.header}>
-        <h1>{user.name}'s Albums</h1>
-        <div className={styles.headerButtons}>
+      {/* Centered Header */}
+      <header
+        className="flex flex-col items-center py-6 border-b border-gray-200 dark:border-gray-700"
+      >
+        <h1 className="text-2xl font-bold mb-4">{user.name || user.id}'s Albums</h1>
+        <nav className="flex space-x-6">
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/community")}
           >
-            ⬅ Back
+            Back
           </button>
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/")}
           >
-            🏠 Home
+            Home
           </button>
           <button
             className={styles.signoutButton}
@@ -120,11 +122,11 @@ export default function ProfilePage() {
           >
             {darkMode ? "Dark Mode On" : "Dark Mode Off"}
           </button>
-        </div>
-      </div>
+        </nav>
+      </header>
 
       {/* Profile Image and Albums */}
-      <div style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
         {user.image && (
           <img
             src={user.image}
