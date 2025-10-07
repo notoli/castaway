@@ -126,6 +126,23 @@ export default function Home() {
         </button>
       </div>
 
+      <div className={styles.header}>
+  <h1>Your Desert Island Albums</h1>
+  <div>
+    <button
+      className={styles.signoutButton}
+      onClick={() => router.push("/community")}
+      style={{ marginRight: "1rem" }}
+    >
+      🌴 Community
+    </button>
+    <button className={styles.signoutButton} onClick={() => signOut()}>
+      Sign out
+    </button>
+  </div>
+</div>
+
+
       {/* Saved albums */}
       <div className={styles.albumGrid}>
         {albums.map((a) => (

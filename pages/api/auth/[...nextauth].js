@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import axios from "axios";
+import { supabase } from "../lib/supabaseClient";
 
 async function refreshAccessToken(token) {
   try {
@@ -66,10 +67,19 @@ export default NextAuth({
       return await refreshAccessToken(token);
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      session.refreshToken = token.refreshToken;
-      session.user.id = token.id;
-      return session;
-    },
+  session.accessToken = token.accessToken;
+  session.refreshToken = token.refreshToken;
+  session.user.id = token.id;
+
+  // Save/update user in Supabase
+  const { user } = session;
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    name: user.name,
+    image: user.image || null,
+  });
+
+  return session;
+},
   },
 });
