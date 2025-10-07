@@ -82,16 +82,23 @@ export default function Community() {
       className={`${styles.container} ${darkMode ? "dark" : ""}`}
       style={{ transition: "background 0.3s, color 0.3s" }}
     >
-      {/* Header */}
-      <div className={styles.header}>
+      {/* Header with right-aligned menu and bottom border */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1rem 0",
+          borderBottom: "1px solid #ccc",
+        }}
+      >
         <h1>Community</h1>
-        <div className={styles.headerButtons}>
+        <div style={{ display: "flex", gap: "1rem" }}>
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/")}
-            style={{ marginRight: "1rem" }}
           >
-          My Albums
+            My Albums
           </button>
           <button className={styles.signoutButton} onClick={() => signOut()}>
             Sign out
@@ -99,14 +106,13 @@ export default function Community() {
           <button
             className={styles.darkModeButton}
             onClick={toggleDarkMode}
-            style={{ marginLeft: "1rem" }}
           >
             {darkMode ? "Dark Mode On" : "Dark Mode Off"}
           </button>
         </div>
       </div>
 
-      <p>Explore other users' Desert Island albums:</p>
+      <p style={{ marginTop: "1rem" }}>Explore other users' Desert Island albums:</p>
 
       <div className={styles.albumGrid}>
         {users.map((user) => (
@@ -120,7 +126,7 @@ export default function Community() {
               {user.image && (
                 <img
                   src={user.image}
-                  alt={user.name}
+                  alt={user.name || user.id}
                   style={{
                     borderRadius: "50%",
                     width: "80px",
@@ -129,7 +135,9 @@ export default function Community() {
                   }}
                 />
               )}
-              <p style={{ fontWeight: "bold", color: "#2a4d4f" }}>{user.name}</p>
+              <p style={{ fontWeight: "bold", color: "#2a4d4f" }}>
+                {user.name || user.id}
+              </p>
 
               {/* Show up to 3 album previews */}
               <div
