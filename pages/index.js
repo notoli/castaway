@@ -18,12 +18,26 @@ export default function Home() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchRef = useRef(null);
 
-  // Redirect only if unauthenticated
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+// Handle login redirect only when status is resolved
+useEffect(() => {
+  if (status === "unauthenticated") {
+    router.replace("/login");
+  }
+}, [status, router]);
+
+// Show a loading state while checking session
+if (status === "loading") {
+  return (
+    <div className={styles.container}>
+      <p style={{ textAlign: "center", marginTop: "40vh", color: "#2a4d4f" }}>
+        Checking session...
+      </p>
+    </div>
+  );
+}
+
+// Don’t render private content if not logged in
+if (!session) return null;
 
   // Fetch user's saved albums when authenticated
   useEffect(() => {
@@ -113,9 +127,6 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Don't render until session is authenticated
-  if (status === "loading") return null;
 
   return (
     <div className={styles.container}>
