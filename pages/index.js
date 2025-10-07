@@ -1,3 +1,5 @@
+// test git from lpt
+
 // pages/index.js
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
