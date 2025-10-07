@@ -23,22 +23,6 @@ export default function Home() {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Upsert user profile after login
-  useEffect(() => {
-    if (!session?.user) return;
-
-    const upsertProfile = async () => {
-      const { error } = await supabase.from("profiles").upsert({
-        id: session.user.id,
-        name: session.user.name || "",
-        image: session.user.image || null,
-      });
-      if (error) console.error("Error upserting profile:", error);
-    };
-
-    upsertProfile();
-  }, [session]);
-
   // Fetch user's saved albums
   useEffect(() => {
     if (session) fetchUserAlbums();
@@ -55,7 +39,7 @@ export default function Home() {
     else setAlbums(data);
   }
 
-  // Spotify search
+  // Search Spotify albums
   async function searchAlbums(term) {
     if (!term) {
       setSearchResults([]);
@@ -128,12 +112,11 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Don’t render until session is loaded
   if (status === "loading" || !session) return null;
 
   return (
     <div className={styles.container}>
-      {/* Header */}
+      {/* Header with Community & Sign out */}
       <div className={styles.header}>
         <h1>Your Desert Island Albums</h1>
         <div>
