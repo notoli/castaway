@@ -1,46 +1,23 @@
 // pages/index.js
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
+import { DarkModeContext } from "./_app"; // import context
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext); // use context
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  // ------------------------------
-  // DARK MODE
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Load saved preference on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("darkMode");
-    if (saved === "true") {
-      setDarkMode(true);
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const next = !prev;
-      if (next) document.documentElement.classList.add("dark");
-      else document.documentElement.classList.remove("dark");
-      localStorage.setItem("darkMode", next);
-      return next;
-    });
-  };
-  // ------------------------------
-
   const searchRef = useRef(null);
 
   // Redirect if unauthenticated
@@ -95,19 +72,11 @@ export default function Home() {
     }
   }
 
-  // Add album with max 5 and duplicate check
+  // Add album
   async function addAlbum(album) {
     if (!album || !session) return;
-
-    if (albums.length >= 5) {
-      alert("You can only add up to 5 albums.");
-      return;
-    }
-
-    if (albums.some((a) => a.album_id === album.id)) {
-      alert("You already added this album!");
-      return;
-    }
+    if (albums.length >= 5) return alert("You can only add up to 5 albums.");
+    if (albums.some((a) => a.album_id === album.id)) return alert("You already added this album!");
 
     const { error: profileError } = await supabase
       .from("profiles")
@@ -116,7 +85,6 @@ export default function Home() {
         name: session.user.name || "",
         image: session.user.image || null,
       });
-
     if (profileError) return console.error("Error upserting profile before album insert:", profileError);
 
     const { data, error } = await supabase
@@ -141,8 +109,7 @@ export default function Home() {
 
   // Delete album
   async function deleteAlbum(albumId, albumName) {
-    const confirmed = window.confirm(`Delete "${albumName}" from your top albums?`);
-    if (!confirmed) return;
+    if (!window.confirm(`Delete "${albumName}" from your top albums?`)) return;
 
     const { error } = await supabase
       .from("user_albums")
@@ -155,9 +122,9 @@ export default function Home() {
 
   // Close dropdown if click outside
   useEffect(() => {
-    function handleClickOutside(e) {
+    const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) setDropdownOpen(false);
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -175,7 +142,7 @@ export default function Home() {
             {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
           </button>
 
-          {/* Existing buttons */}
+          {/* Other buttons */}
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/community")}
