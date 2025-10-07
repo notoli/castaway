@@ -5,19 +5,21 @@ import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
-import { DarkModeContext } from "./_app"; // import context
+import { DarkModeContext } from "./_app";
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { darkMode, toggleDarkMode } = useContext(DarkModeContext); // use context
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loadingAlbums, setLoadingAlbums] = useState(true);
+
   const searchRef = useRef(null);
 
   // Redirect if unauthenticated
@@ -25,21 +27,12 @@ export default function Home() {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Ensure profile exists and fetch user's albums
+  // Fetch user's albums
   useEffect(() => {
     if (!session?.user) return;
 
-    const initProfileAndAlbums = async () => {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: session.user.id,
-          name: session.user.name || "",
-          image: session.user.image || null,
-        });
-
-      if (profileError) return console.error("Error upserting profile:", profileError);
-
+    const fetchAlbums = async () => {
+      setLoadingAlbums(true);
       const { data: albumsData, error: albumsError } = await supabase
         .from("user_albums")
         .select("*")
@@ -47,15 +40,16 @@ export default function Home() {
         .order("created_at", { ascending: false });
 
       if (albumsError) console.error("Error fetching albums:", albumsError);
-      else setAlbums(albumsData);
+      else setAlbums(albumsData || []);
+      setLoadingAlbums(false);
     };
 
-    initProfileAndAlbums();
+    fetchAlbums();
   }, [session]);
 
   // Spotify search
   async function searchAlbums(term) {
-    if (!term) {
+    if (!term || !session?.accessToken) {
       setSearchResults([]);
       setDropdownOpen(false);
       return;
@@ -77,15 +71,6 @@ export default function Home() {
     if (!album || !session) return;
     if (albums.length >= 5) return alert("You can only add up to 5 albums.");
     if (albums.some((a) => a.album_id === album.id)) return alert("You already added this album!");
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: session.user.id,
-        name: session.user.name || "",
-        image: session.user.image || null,
-      });
-    if (profileError) return console.error("Error upserting profile before album insert:", profileError);
 
     const { data, error } = await supabase
       .from("user_albums")
@@ -132,17 +117,14 @@ export default function Home() {
   if (status === "loading" || !session) return null;
 
   return (
-    <div className={`${styles.container} ${darkMode ? "dark" : ""}`}>
+    <div
+      className={`${styles.container} ${darkMode ? "dark" : ""}`}
+      style={{ transition: "background 0.3s, color 0.3s" }}
+    >
       {/* Header */}
       <div className={styles.header}>
         <h1>Your Albums</h1>
         <div className={styles.headerButtons}>
-          {/* Dark mode toggle */}
-          <button onClick={toggleDarkMode} className={styles.toggleWrapper}>
-            {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-          </button>
-
-          {/* Other buttons */}
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/community")}
@@ -154,25 +136,34 @@ export default function Home() {
             Sign out
           </button>
         </div>
+
+        {/* Dark mode toggle below buttons */}
+        <button onClick={toggleDarkMode} className={styles.toggleWrapper} style={{ marginTop: "0.5rem" }}>
+          <div className={`${styles.toggleCircle} ${darkMode ? styles.active : ""}`}></div>
+        </button>
       </div>
 
       {/* Saved albums */}
-      <div className={styles.albumGrid}>
-        {albums.map((a) => (
-          <div key={a.id} className={styles.albumCard}>
-            <button
-              className={styles.deleteButton}
-              onClick={() => deleteAlbum(a.id, a.album_name)}
-              title="Delete album"
-            >
-              ×
-            </button>
-            {a.album_image && <img src={a.album_image} alt={a.album_name} />}
-            <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
-            <p style={{ margin: 0, fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
-          </div>
-        ))}
-      </div>
+      {loadingAlbums ? (
+        <p>Loading your albums…</p>
+      ) : (
+        <div className={styles.albumGrid}>
+          {albums.map((a) => (
+            <div key={a.id} className={styles.albumCard}>
+              <button
+                className={styles.deleteButton}
+                onClick={() => deleteAlbum(a.id, a.album_name)}
+                title="Delete album"
+              >
+                ×
+              </button>
+              {a.album_image && <img src={a.album_image} alt={a.album_name} />}
+              <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{a.album_name}</p>
+              <p style={{ margin: 0, fontSize: "0.9rem", color: "#555" }}>{a.artist_name}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Search */}
       <div className={styles.searchContainer} ref={searchRef}>
@@ -193,9 +184,7 @@ export default function Home() {
               <ul className={styles.searchDropdown}>
                 {searchResults.map((album) => (
                   <li key={album.id} onClick={() => addAlbum(album)}>
-                    {album.images[0]?.url && (
-                      <img src={album.images[0].url} alt={album.name} width={50} />
-                    )}
+                    {album.images[0]?.url && <img src={album.images[0].url} alt={album.name} width={50} />}
                     <span>
                       {album.name} — {album.artists[0]?.name}
                     </span>

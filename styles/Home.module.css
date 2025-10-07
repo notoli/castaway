@@ -1,5 +1,45 @@
 /* /styles/Home.module.css */
 
+/* Toggle switch container */
+.toggleWrapper {
+  margin-top: 1rem; /* space below header buttons */
+  width: 50px;
+  height: 26px;
+  background: #ddd;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.toggleWrapper:hover {
+  background: #ccc;
+}
+
+/* The circle inside the toggle */
+.toggleCircle {
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s, background 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Active state moves circle to the right */
+.toggleCircle.active {
+  transform: translateX(24px);
+  background: #f4a261; /* sandy accent */
+}
+
+/* Dark mode body transition (smooth) */
+body, .dark .container {
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
 /* Smooth theme transition */
 .container, .albumCard, .header, .searchContainer, .searchInput, .searchDropdown {
   transition: 
