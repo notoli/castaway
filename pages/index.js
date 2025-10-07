@@ -121,26 +121,37 @@ export default function Home() {
       className={`${styles.container} ${darkMode ? "dark" : ""}`}
       style={{ transition: "background 0.3s, color 0.3s" }}
     >
-      {/* Header */}
-      <div className={styles.header}>
+      {/* Header with right-aligned menu */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1rem 0",
+          borderBottom: "1px solid #ccc",
+        }}
+      >
         <h1>Your Albums</h1>
-        <div className={styles.headerButtons}>
+        <div style={{ display: "flex", gap: "1rem" }}>
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/community")}
-            style={{ marginRight: "1rem" }}
           >
             Community
           </button>
-          <button className={styles.signoutButton} onClick={() => signOut()}>
+          <button
+            className={styles.signoutButton}
+            onClick={() => signOut()}
+          >
             Sign out
           </button>
+          <button
+            className={styles.darkModeButton}
+            onClick={toggleDarkMode}
+          >
+            {darkMode ? "Dark Mode On" : "Dark Mode Off"}
+          </button>
         </div>
-
-        {/* Dark mode toggle below buttons */}
-<button onClick={toggleDarkMode} className={styles.darkModeButton}>
-  {darkMode ? "Dark Mode On" : "Dark Mode Off"}
-</button>
       </div>
 
       {/* Saved albums */}

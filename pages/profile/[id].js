@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../../styles/Home.module.css";
-import { DarkModeContext } from "../_app"; // adjust path if needed
+import { DarkModeContext } from "../_app";
 
 const spotifyApi = new SpotifyWebApi();
 
@@ -52,6 +52,8 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
+      if (!data.name) data.name = data.id; // fallback to id if name is empty
+
       // If no image, fetch from Spotify
       if (!data.image) {
         try {
@@ -74,7 +76,6 @@ export default function ProfilePage() {
     }
   }
 
-  // Show background while loading to avoid white flash
   if (!user)
     return (
       <div
@@ -92,12 +93,18 @@ export default function ProfilePage() {
       className={`${styles.container} ${darkMode ? "dark" : ""}`}
       style={{ transition: "background 0.3s, color 0.3s" }}
     >
-      {/* Centered Header */}
-      <header
-        className="flex flex-col items-center py-6 border-b border-gray-200 dark:border-gray-700"
+      {/* Header with title left, buttons right */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1rem 0",
+          borderBottom: "1px solid #ccc",
+        }}
       >
-        <h1 className="text-2xl font-bold mb-4">{user.name || user.id}'s Albums</h1>
-        <nav className="flex space-x-6">
+        <h1>{user.name}'s Albums</h1>
+        <div style={{ display: "flex", gap: "1rem" }}>
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/community")}
@@ -122,8 +129,8 @@ export default function ProfilePage() {
           >
             {darkMode ? "Dark Mode On" : "Dark Mode Off"}
           </button>
-        </nav>
-      </header>
+        </div>
+      </div>
 
       {/* Profile Image and Albums */}
       <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
