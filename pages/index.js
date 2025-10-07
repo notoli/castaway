@@ -18,28 +18,28 @@ export default function Home() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchRef = useRef(null);
 
-// Handle login redirect only when status is resolved
-useEffect(() => {
-  if (status === "unauthenticated") {
-    router.replace("/login");
-  }
-}, [status, router]);
+  // Redirect if unauthenticated
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/login");
+  }, [status, router]);
 
-// Show a loading state while checking session
-if (status === "loading") {
-  return (
-    <div className={styles.container}>
-      <p style={{ textAlign: "center", marginTop: "40vh", color: "#2a4d4f" }}>
-        Checking session...
-      </p>
-    </div>
-  );
-}
+  // Upsert user profile in Supabase after login
+  useEffect(() => {
+    if (!session?.user) return;
 
-// Don’t render private content if not logged in
-if (!session) return null;
+    const upsertProfile = async () => {
+      const { error } = await supabase.from("profiles").upsert({
+        id: session.user.id,
+        name: session.user.name || "",
+        image: session.user.image || null,
+      });
+      if (error) console.error("Error upserting profile:", error);
+    };
 
-  // Fetch user's saved albums when authenticated
+    upsertProfile();
+  }, [session]);
+
+  // Fetch user's saved albums
   useEffect(() => {
     if (session) fetchUserAlbums();
   }, [session]);
@@ -103,7 +103,7 @@ if (!session) return null;
     }
   }
 
-  // Delete album with confirmation
+  // Delete album
   async function deleteAlbum(albumId, albumName) {
     const confirmed = window.confirm(`Delete "${albumName}" from your top albums?`);
     if (!confirmed) return;
@@ -128,31 +128,27 @@ if (!session) return null;
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Don't render until session is loaded
+  if (status === "loading" || !session) return null;
+
   return (
     <div className={styles.container}>
+      {/* Header with Community & Sign out */}
       <div className={styles.header}>
         <h1>Your Desert Island Albums</h1>
-        <button className={styles.signoutButton} onClick={() => signOut()}>
-          Sign out
-        </button>
+        <div>
+          <button
+            className={styles.signoutButton}
+            onClick={() => router.push("/community")}
+            style={{ marginRight: "1rem" }}
+          >
+            🌴 Community
+          </button>
+          <button className={styles.signoutButton} onClick={() => signOut()}>
+            Sign out
+          </button>
+        </div>
       </div>
-
-      <div className={styles.header}>
-  <h1>Your Desert Island Albums</h1>
-  <div>
-    <button
-      className={styles.signoutButton}
-      onClick={() => router.push("/community")}
-      style={{ marginRight: "1rem" }}
-    >
-      🌴 Community
-    </button>
-    <button className={styles.signoutButton} onClick={() => signOut()}>
-      Sign out
-    </button>
-  </div>
-</div>
-
 
       {/* Saved albums */}
       <div className={styles.albumGrid}>
@@ -175,7 +171,6 @@ if (!session) return null;
       {/* Search */}
       <div className={styles.searchContainer} ref={searchRef}>
         <h2>Search Spotify Albums</h2>
-
         {albums.length < 5 ? (
           <>
             <input
@@ -188,13 +183,14 @@ if (!session) return null;
               }}
               className={styles.searchInput}
             />
-
             {dropdownOpen && searchResults.length > 0 && (
               <ul className={styles.searchDropdown}>
                 {searchResults.map((album) => (
                   <li key={album.id} onClick={() => addAlbum(album)}>
                     {album.images[0]?.url && <img src={album.images[0].url} alt={album.name} width={50} />}
-                    <span>{album.name} — {album.artists[0]?.name}</span>
+                    <span>
+                      {album.name} — {album.artists[0]?.name}
+                    </span>
                   </li>
                 ))}
               </ul>

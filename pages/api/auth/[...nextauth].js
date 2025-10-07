@@ -24,15 +24,12 @@ async function refreshAccessToken(token) {
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000, // in ms
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // fall back
+      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
     console.error("Error refreshing Spotify access token:", error);
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
+    return { ...token, error: "RefreshAccessTokenError" };
   }
 }
 
@@ -47,7 +44,6 @@ export default NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, account, user }) {
-      // First login
       if (account && user) {
         return {
           accessToken: account.access_token,
@@ -57,28 +53,17 @@ export default NextAuth({
         };
       }
 
-      // Return previous token if not expired
       if (Date.now() < token.accessTokenExpires) {
         return token;
       }
 
-      // Access token expired → refresh
       return await refreshAccessToken(token);
     },
     async session({ session, token }) {
-  session.accessToken = token.accessToken;
-  session.refreshToken = token.refreshToken;
-  session.user.id = token.id;
-
-  // Save/update user in Supabase
-  const { user } = session;
-  await supabase.from("profiles").upsert({
-    id: user.id,
-    name: user.name,
-    image: user.image || null,
-  });
-
-  return session;
-},
+      session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+      session.user.id = token.id;
+      return session;
+    },
   },
 });
