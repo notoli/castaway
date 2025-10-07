@@ -19,7 +19,6 @@ export default function Header({ mainTitle, pageTitle, backButtonPath }) {
           <button
             className={styles.signoutButton}
             onClick={() => router.push(backButtonPath)}
-            style={{ marginRight: "1rem" }}
           >
             Back
           </button>
@@ -30,19 +29,17 @@ export default function Header({ mainTitle, pageTitle, backButtonPath }) {
             <button
               className={styles.signoutButton}
               onClick={() => router.push("/community")}
-              style={{ marginRight: "1rem" }}
             >
               Community
             </button>
             <button
               className={styles.signoutButton}
               onClick={() => signOut()}
-              style={{ marginRight: "1rem" }}
             >
               Sign out
             </button>
             <button
-              className={styles.signoutButton} // <-- match size/style
+              className={styles.darkModeButton} // revert to separate class
               onClick={toggleDarkMode}
             >
               {darkMode ? "Dark Mode On" : "Dark Mode Off"}
