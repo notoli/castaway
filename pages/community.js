@@ -1,17 +1,19 @@
 // pages/community.js
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
 import Link from "next/link";
+import { DarkModeContext } from "./_app";
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function Community() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const [users, setUsers] = useState([]);
 
   // Redirect if not logged in
@@ -76,19 +78,30 @@ export default function Community() {
   if (status === "loading") return null;
 
   return (
-    <div className={styles.container}>
+    <div
+      className={`${styles.container} ${darkMode ? "dark" : ""}`}
+      style={{ transition: "background 0.3s, color 0.3s" }}
+    >
       {/* Header */}
       <div className={styles.header}>
         <h1>Community</h1>
-        <div>
+        <div className={styles.headerButtons}>
           <button
             className={styles.signoutButton}
             onClick={() => router.push("/")}
+            style={{ marginRight: "1rem" }}
           >
-            🏠 My Albums
+          My Albums
           </button>
           <button className={styles.signoutButton} onClick={() => signOut()}>
             Sign out
+          </button>
+          <button
+            className={styles.darkModeButton}
+            onClick={toggleDarkMode}
+            style={{ marginLeft: "1rem" }}
+          >
+            {darkMode ? "Dark Mode On" : "Dark Mode Off"}
           </button>
         </div>
       </div>
