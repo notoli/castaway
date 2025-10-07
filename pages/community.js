@@ -16,15 +16,13 @@ export default function Community() {
 
   // Redirect if not logged in
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
+    if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Fetch profiles with top albums and dynamically get Spotify avatars
+  // Fetch profiles with top albums
   useEffect(() => {
     if (session) {
-      spotifyApi.setAccessToken(session.accessToken);
+      if (session.accessToken) spotifyApi.setAccessToken(session.accessToken);
       fetchProfiles();
     }
   }, [session]);
@@ -48,19 +46,18 @@ export default function Community() {
 
       if (error) throw error;
 
-      const updatedUsers = await Promise.all(
+      const updatedData = await Promise.all(
         data.map(async (user) => {
-          // If no image, try fetching from Spotify
+          // Only fetch Spotify avatar if no image exists
           if (!user.image) {
             try {
               const spotifyUser = await spotifyApi.getUser(user.id);
               if (spotifyUser?.images?.[0]?.url) {
-                // Update Supabase
+                user.image = spotifyUser.images[0].url;
                 await supabase
                   .from("profiles")
-                  .update({ image: spotifyUser.images[0].url })
+                  .update({ image: user.image })
                   .eq("id", user.id);
-                user.image = spotifyUser.images[0].url;
               }
             } catch (err) {
               console.warn(`Could not fetch Spotify avatar for ${user.name}:`, err);
@@ -70,7 +67,7 @@ export default function Community() {
         })
       );
 
-      setUsers(updatedUsers);
+      setUsers(updatedData);
     } catch (err) {
       console.error("Error fetching profiles:", err);
     }
@@ -84,7 +81,10 @@ export default function Community() {
       <div className={styles.header}>
         <h1>Community</h1>
         <div>
-          <button className={styles.signoutButton} onClick={() => router.push("/")}>
+          <button
+            className={styles.signoutButton}
+            onClick={() => router.push("/")}
+          >
             🏠 My Albums
           </button>
           <button className={styles.signoutButton} onClick={() => signOut()}>
@@ -104,16 +104,18 @@ export default function Community() {
             style={{ textDecoration: "none" }}
           >
             <div style={{ textAlign: "center" }}>
-              <img
-                src={user.image || "/default-avatar.png"}
-                alt={user.name}
-                style={{
-                  borderRadius: "50%",
-                  width: "80px",
-                  height: "80px",
-                  marginBottom: "0.5rem",
-                }}
-              />
+              {user.image && (
+                <img
+                  src={user.image}
+                  alt={user.name}
+                  style={{
+                    borderRadius: "50%",
+                    width: "80px",
+                    height: "80px",
+                    marginBottom: "0.5rem",
+                  }}
+                />
+              )}
               <p style={{ fontWeight: "bold", color: "#2a4d4f" }}>{user.name}</p>
 
               {/* Show up to 3 album previews */}
@@ -128,7 +130,7 @@ export default function Community() {
                 {user.user_albums?.slice(0, 3).map((album) => (
                   <img
                     key={album.album_id}
-                    src={album.album_image || "/default-album.png"}
+                    src={album.album_image || undefined}
                     alt={album.album_name}
                     style={{ width: "50px", height: "50px", borderRadius: "4px" }}
                   />
