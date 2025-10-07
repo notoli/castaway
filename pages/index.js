@@ -177,6 +177,7 @@ function toggleDarkMode() {
       {/* Header with Community & Sign out */}
 <div className={styles.header}>
   <h1>Your Albums</h1>
+<p>Dark mode is {darkMode ? "ON" : "OFF"}</p>
 
   <div className={styles.headerButtons}>
     {/* 🌙 Dark mode toggle */}
