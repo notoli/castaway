@@ -138,9 +138,9 @@ export default function Home() {
         </div>
 
         {/* Dark mode toggle below buttons */}
-        <button onClick={toggleDarkMode} className={styles.toggleWrapper} style={{ marginTop: "0.5rem" }}>
-          <div className={`${styles.toggleCircle} ${darkMode ? styles.active : ""}`}></div>
-        </button>
+<button onClick={toggleDarkMode} className={styles.darkModeButton}>
+  {darkMode ? "Dark Mode On" : "Dark Mode Off"}
+</button>
       </div>
 
       {/* Saved albums */}
