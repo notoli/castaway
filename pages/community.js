@@ -1,19 +1,20 @@
 // pages/community.js
 import { useEffect, useState, useContext } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
-import styles from "../styles/Home.module.css";
 import Link from "next/link";
+import styles from "../styles/Home.module.css";
 import { DarkModeContext } from "./_app";
+import Header from "../components/Header";
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function Community() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { darkMode } = useContext(DarkModeContext);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
@@ -73,33 +74,7 @@ export default function Community() {
 
   return (
     <div className={`${styles.container} ${darkMode ? "dark" : ""}`} style={{ transition: "background 0.3s, color 0.3s" }}>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          padding: "1rem 0",
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1>Community</h1>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <button className={styles.signoutButton} onClick={() => router.push("/")}>
-              My Albums
-            </button>
-            <button className={styles.signoutButton} onClick={() => signOut()}>
-              Sign out
-            </button>
-            <button className={styles.darkModeButton} onClick={toggleDarkMode}>
-              {darkMode ? "Dark Mode On" : "Dark Mode Off"}
-            </button>
-          </div>
-        </div>
-        <p style={{ marginTop: "0.5rem", fontWeight: "500", color: "#555" }}>
-          Explore other users' albums
-        </p>
-      </div>
+      <Header mainTitle="Community" pageTitle="Explore other users' albums" />
 
       <div className={styles.albumGrid}>
         {users.map((user) => (

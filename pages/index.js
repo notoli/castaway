@@ -1,18 +1,19 @@
 // pages/index.js
 import { useState, useEffect, useRef, useContext } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../styles/Home.module.css";
 import { DarkModeContext } from "./_app";
+import Header from "../components/Header";
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { darkMode } = useContext(DarkModeContext);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -22,10 +23,12 @@ export default function Home() {
 
   const searchRef = useRef(null);
 
+  // Redirect if unauthenticated
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
+  // Fetch user's albums
   useEffect(() => {
     if (!session?.user) return;
 
@@ -45,6 +48,7 @@ export default function Home() {
     fetchAlbums();
   }, [session]);
 
+  // Spotify search
   async function searchAlbums(term) {
     if (!term || !session?.accessToken) {
       setSearchResults([]);
@@ -63,6 +67,7 @@ export default function Home() {
     }
   }
 
+  // Add album
   async function addAlbum(album) {
     if (!album || !session) return;
     if (albums.length >= 5) return alert("You can only add up to 5 albums.");
@@ -88,6 +93,7 @@ export default function Home() {
     }
   }
 
+  // Delete album
   async function deleteAlbum(albumId, albumName) {
     if (!window.confirm(`Delete "${albumName}" from your top albums?`)) return;
 
@@ -100,6 +106,7 @@ export default function Home() {
     if (!error) setAlbums((prev) => prev.filter((a) => a.id !== albumId));
   }
 
+  // Close dropdown if click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) setDropdownOpen(false);
@@ -111,37 +118,8 @@ export default function Home() {
   if (status === "loading" || !session) return null;
 
   return (
-    <div
-      className={`${styles.container} ${darkMode ? "dark" : ""}`}
-      style={{ transition: "background 0.3s, color 0.3s" }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          padding: "1rem 0",
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1>Your Albums</h1>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <button className={styles.signoutButton} onClick={() => router.push("/community")}>
-              Community
-            </button>
-            <button className={styles.signoutButton} onClick={() => signOut()}>
-              Sign out
-            </button>
-            <button className={styles.darkModeButton} onClick={toggleDarkMode}>
-              {darkMode ? "Dark Mode On" : "Dark Mode Off"}
-            </button>
-          </div>
-        </div>
-        <p style={{ marginTop: "0.5rem", fontWeight: "500", color: "#555" }}>
-          My Albums
-        </p>
-      </div>
+    <div className={`${styles.container} ${darkMode ? "dark" : ""}`} style={{ transition: "background 0.3s, color 0.3s" }}>
+      <Header mainTitle="Your Albums" pageTitle="My Albums" />
 
       {/* Saved albums */}
       {loadingAlbums ? (

@@ -5,13 +5,14 @@ import { supabase } from "../../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../../styles/Home.module.css";
 import { DarkModeContext } from "../_app";
+import Header from "../../components/Header";
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function ProfilePage() {
   const router = useRouter();
   const { id } = router.query;
-  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { darkMode } = useContext(DarkModeContext);
 
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
@@ -72,33 +73,7 @@ export default function ProfilePage() {
 
   return (
     <div className={`${styles.container} ${darkMode ? "dark" : ""}`} style={{ transition: "background 0.3s, color 0.3s" }}>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          padding: "1rem 0",
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1>Profile</h1>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <button className={styles.signoutButton} onClick={() => router.push("/community")}>
-              Back
-            </button>
-            <button className={styles.signoutButton} onClick={() => signOut()}>
-              Sign out
-            </button>
-            <button className={styles.darkModeButton} onClick={toggleDarkMode}>
-              {darkMode ? "Dark Mode On" : "Dark Mode Off"}
-            </button>
-          </div>
-        </div>
-        <p style={{ marginTop: "0.5rem", fontWeight: "500", color: "#555" }}>
-          {user ? `${user.name || user.id}'s albums` : ""}
-        </p>
-      </div>
+      <Header mainTitle="Profile" pageTitle={`${user.name || user.id}'s albums`} backButtonPath="/community" />
 
       <div style={{ textAlign: "center" }}>
         {user.image && <img src={user.image} alt={user.name || user.id} style={{ borderRadius: "50%", width: "100px", height: "100px", marginBottom: "1rem" }} />}
