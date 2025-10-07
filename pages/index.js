@@ -23,21 +23,38 @@ export default function Home() {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Fetch user's saved albums
+  // Ensure profile exists and fetch user's albums
   useEffect(() => {
-    if (session) fetchUserAlbums();
+    if (!session?.user) return;
+
+    const initProfileAndAlbums = async () => {
+      // Upsert user profile first
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: session.user.id,
+          name: session.user.name || "",
+          image: session.user.image || null,
+        });
+
+      if (profileError) {
+        console.error("Error upserting profile:", profileError);
+        return;
+      }
+
+      // Fetch albums after profile is ensured
+      const { data: albumsData, error: albumsError } = await supabase
+        .from("user_albums")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+
+      if (albumsError) console.error("Error fetching albums:", albumsError);
+      else setAlbums(albumsData);
+    };
+
+    initProfileAndAlbums();
   }, [session]);
-
-  async function fetchUserAlbums() {
-    const { data, error } = await supabase
-      .from("user_albums")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) console.error("Error fetching albums:", error);
-    else setAlbums(data);
-  }
 
   // Search Spotify albums
   async function searchAlbums(term) {
@@ -60,7 +77,7 @@ export default function Home() {
 
   // Add album with max 5 and duplicate check
   async function addAlbum(album) {
-    if (!album) return;
+    if (!album || !session) return;
 
     if (albums.length >= 5) {
       alert("You can only add up to 5 albums.");
@@ -70,6 +87,20 @@ export default function Home() {
     // Prevent duplicate
     if (albums.some((a) => a.album_id === album.id)) {
       alert("You already added this album!");
+      return;
+    }
+
+    // Ensure profile exists before inserting album
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({
+        id: session.user.id,
+        name: session.user.name || "",
+        image: session.user.image || null,
+      });
+
+    if (profileError) {
+      console.error("Error upserting profile before album insert:", profileError);
       return;
     }
 
