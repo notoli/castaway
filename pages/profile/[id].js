@@ -90,4 +90,28 @@ export default function ProfilePage() {
             <button className={styles.signoutButton} onClick={() => signOut()}>
               Sign out
             </button>
-            <button className={styles.darkModeButton} onC
+            <button className={styles.darkModeButton} onClick={toggleDarkMode}>
+              {darkMode ? "Dark Mode On" : "Dark Mode Off"}
+            </button>
+          </div>
+        </div>
+        <p style={{ marginTop: "0.5rem", fontWeight: "500", color: "#555" }}>
+          {user ? `${user.name || user.id}'s albums` : ""}
+        </p>
+      </div>
+
+      <div style={{ textAlign: "center" }}>
+        {user.image && <img src={user.image} alt={user.name || user.id} style={{ borderRadius: "50%", width: "100px", height: "100px", marginBottom: "1rem" }} />}
+        <div className={styles.albumGrid}>
+          {user.user_albums?.map((album) => (
+            <div key={album.album_id} className={styles.albumCard}>
+              {album.album_image && <img src={album.album_image} alt={album.album_name} />}
+              <p style={{ fontWeight: "bold", margin: "0.5rem 0 0 0" }}>{album.album_name}</p>
+              <p style={{ margin: 0, fontSize: "0.9rem", color: "#555" }}>{album.artist_name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
