@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import axios from "axios";
-import { supabase } from "../lib/supabaseClient";
+import { supabaseServer } from "../../../lib/supabaseServer";
+
 
 async function refreshAccessToken(token) {
   try {
