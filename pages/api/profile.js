@@ -1,14 +1,11 @@
-// pages/api/profile.js
 import { supabase } from "../../lib/supabaseClient";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "./auth/[...nextauth]";
+import { authOptions } from "../../lib/authOptions"; // <- import from the shared module
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
+  if (!session) return res.status(401).json({ error: "Not authenticated" });
 
   if (req.method === "POST") {
     const { name, image } = req.body;
