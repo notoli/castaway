@@ -16,12 +16,10 @@ export default function Community() {
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const [users, setUsers] = useState([]);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Fetch profiles with top albums
   useEffect(() => {
     if (session) {
       if (session.accessToken) spotifyApi.setAccessToken(session.accessToken);
@@ -50,16 +48,12 @@ export default function Community() {
 
       const updatedData = await Promise.all(
         data.map(async (user) => {
-          // Only fetch Spotify avatar if no image exists
           if (!user.image) {
             try {
               const spotifyUser = await spotifyApi.getUser(user.id);
               if (spotifyUser?.images?.[0]?.url) {
                 user.image = spotifyUser.images[0].url;
-                await supabase
-                  .from("profiles")
-                  .update({ image: user.image })
-                  .eq("id", user.id);
+                await supabase.from("profiles").update({ image: user.image }).eq("id", user.id);
               }
             } catch (err) {
               console.warn(`Could not fetch Spotify avatar for ${user.name}:`, err);
@@ -78,83 +72,50 @@ export default function Community() {
   if (status === "loading") return null;
 
   return (
-    <div
-      className={`${styles.container} ${darkMode ? "dark" : ""}`}
-      style={{ transition: "background 0.3s, color 0.3s" }}
-    >
-      {/* Header with right-aligned menu and bottom border */}
+    <div className={`${styles.container} ${darkMode ? "dark" : ""}`} style={{ transition: "background 0.3s, color 0.3s" }}>
+      {/* Header */}
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          flexDirection: "column",
           padding: "1rem 0",
           borderBottom: "1px solid #ccc",
         }}
       >
-        <h1>Community</h1>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button
-            className={styles.signoutButton}
-            onClick={() => router.push("/")}
-          >
-            My Albums
-          </button>
-          <button className={styles.signoutButton} onClick={() => signOut()}>
-            Sign out
-          </button>
-          <button
-            className={styles.darkModeButton}
-            onClick={toggleDarkMode}
-          >
-            {darkMode ? "Dark Mode On" : "Dark Mode Off"}
-          </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1>Community</h1>
+          <div style={{ display: "flex", gap: "1rem" }}>
+            <button className={styles.signoutButton} onClick={() => router.push("/")}>
+              My Albums
+            </button>
+            <button className={styles.signoutButton} onClick={() => signOut()}>
+              Sign out
+            </button>
+            <button className={styles.darkModeButton} onClick={toggleDarkMode}>
+              {darkMode ? "Dark Mode On" : "Dark Mode Off"}
+            </button>
+          </div>
         </div>
+        <p style={{ marginTop: "0.5rem", fontWeight: "500", color: "#555" }}>
+          Explore other users' albums
+        </p>
       </div>
-
-      <p style={{ marginTop: "1rem" }}>Explore other users' Desert Island albums:</p>
 
       <div className={styles.albumGrid}>
         {users.map((user) => (
-          <Link
-            key={user.id}
-            href={`/profile/${user.id}`}
-            className={styles.albumCard}
-            style={{ textDecoration: "none" }}
-          >
+          <Link key={user.id} href={`/profile/${user.id}`} className={styles.albumCard} style={{ textDecoration: "none" }}>
             <div style={{ textAlign: "center" }}>
               {user.image && (
                 <img
                   src={user.image}
                   alt={user.name || user.id}
-                  style={{
-                    borderRadius: "50%",
-                    width: "80px",
-                    height: "80px",
-                    marginBottom: "0.5rem",
-                  }}
+                  style={{ borderRadius: "50%", width: "80px", height: "80px", marginBottom: "0.5rem" }}
                 />
               )}
-              <p style={{ fontWeight: "bold", color: "#2a4d4f" }}>
-                {user.name || user.id}
-              </p>
-
-              {/* Show up to 3 album previews */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  justifyContent: "center",
-                  marginTop: "0.5rem",
-                }}
-              >
+              <p style={{ fontWeight: "bold", color: "#2a4d4f" }}>{user.name || user.id}</p>
+              <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "0.5rem" }}>
                 {user.user_albums?.slice(0, 3).map((album) => (
-                  <img
-                    key={album.album_id}
-                    src={album.album_image || undefined}
-                    alt={album.album_name}
-                    style={{ width: "50px", height: "50px", borderRadius: "4px" }}
-                  />
+                  <img key={album.album_id} src={album.album_image || undefined} alt={album.album_name} style={{ width: "50px", height: "50px", borderRadius: "4px" }} />
                 ))}
               </div>
             </div>
