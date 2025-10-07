@@ -1,5 +1,14 @@
 /* /styles/Home.module.css */
 
+/* Smooth theme transition */
+.container, .albumCard, .header, .searchContainer, .searchInput, .searchDropdown {
+  transition: 
+    background 0.4s ease, 
+    color 0.4s ease, 
+    border-color 0.4s ease, 
+    box-shadow 0.4s ease;
+}
+
 .container {
   min-height: 100vh;
   padding: 2rem;

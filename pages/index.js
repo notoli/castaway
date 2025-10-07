@@ -1,5 +1,3 @@
-// test git from lpt
-
 // pages/index.js
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -19,22 +17,29 @@ export default function Home() {
   const [albums, setAlbums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-const [darkMode, setDarkMode] = useState(false);
+  // ------------------------------
+  // DARK MODE
+  const [darkMode, setDarkMode] = useState(false);
 
-// Load saved preference
-useEffect(() => {
-  const saved = localStorage.getItem("darkMode") === "true";
-  setDarkMode(saved);
-  if (saved) document.body.classList.add("dark");
-}, []);
+  // Load saved preference on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("darkMode");
+    if (saved === "true") {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
 
-// Toggle dark mode
-function toggleDarkMode() {
-  const newMode = !darkMode;
-  setDarkMode(newMode);
-  localStorage.setItem("darkMode", newMode);
-  console.log("Dark mode:", newMode);
-}
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      if (next) document.documentElement.classList.add("dark");
+      else document.documentElement.classList.remove("dark");
+      localStorage.setItem("darkMode", next);
+      return next;
+    });
+  };
+  // ------------------------------
 
   const searchRef = useRef(null);
 
@@ -48,7 +53,6 @@ function toggleDarkMode() {
     if (!session?.user) return;
 
     const initProfileAndAlbums = async () => {
-      // Upsert user profile first
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert({
@@ -57,12 +61,8 @@ function toggleDarkMode() {
           image: session.user.image || null,
         });
 
-      if (profileError) {
-        console.error("Error upserting profile:", profileError);
-        return;
-      }
+      if (profileError) return console.error("Error upserting profile:", profileError);
 
-      // Fetch albums after profile is ensured
       const { data: albumsData, error: albumsError } = await supabase
         .from("user_albums")
         .select("*")
@@ -76,7 +76,7 @@ function toggleDarkMode() {
     initProfileAndAlbums();
   }, [session]);
 
-  // Search Spotify albums
+  // Spotify search
   async function searchAlbums(term) {
     if (!term) {
       setSearchResults([]);
@@ -104,13 +104,11 @@ function toggleDarkMode() {
       return;
     }
 
-    // Prevent duplicate
     if (albums.some((a) => a.album_id === album.id)) {
       alert("You already added this album!");
       return;
     }
 
-    // Ensure profile exists before inserting album
     const { error: profileError } = await supabase
       .from("profiles")
       .upsert({
@@ -119,10 +117,7 @@ function toggleDarkMode() {
         image: session.user.image || null,
       });
 
-    if (profileError) {
-      console.error("Error upserting profile before album insert:", profileError);
-      return;
-    }
+    if (profileError) return console.error("Error upserting profile before album insert:", profileError);
 
     const { data, error } = await supabase
       .from("user_albums")
@@ -135,9 +130,8 @@ function toggleDarkMode() {
       })
       .select();
 
-    if (error) {
-      console.error("Supabase insert error:", error);
-    } else {
+    if (error) console.error("Supabase insert error:", error);
+    else {
       setAlbums((prev) => [...prev, data[0]]);
       setSearchTerm("");
       setSearchResults([]);
@@ -162,9 +156,7 @@ function toggleDarkMode() {
   // Close dropdown if click outside
   useEffect(() => {
     function handleClickOutside(e) {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) setDropdownOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -174,30 +166,28 @@ function toggleDarkMode() {
 
   return (
     <div className={`${styles.container} ${darkMode ? "dark" : ""}`}>
-      {/* Header with Community & Sign out */}
-<div className={styles.header}>
-  <h1>Your Albums</h1>
-<p>Dark mode is {darkMode ? "ON" : "OFF"}</p>
+      {/* Header */}
+      <div className={styles.header}>
+        <h1>Your Albums</h1>
+        <div className={styles.headerButtons}>
+          {/* Dark mode toggle */}
+          <button onClick={toggleDarkMode} className={styles.toggleWrapper}>
+            {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+          </button>
 
-  <div className={styles.headerButtons}>
-    {/* 🌙 Dark mode toggle */}
-    <button onClick={toggleDarkMode} className={styles.toggleWrapper}>
-      <div className={`${styles.toggleCircle} ${darkMode ? styles.active : ""}`}></div>
-    </button>
-
-    {/* Existing buttons */}
-    <button
-      className={styles.signoutButton}
-      onClick={() => router.push("/community")}
-      style={{ marginRight: "1rem" }}
-    >
-      Community
-    </button>
-    <button className={styles.signoutButton} onClick={() => signOut()}>
-      Sign out
-    </button>
-  </div>
-</div>
+          {/* Existing buttons */}
+          <button
+            className={styles.signoutButton}
+            onClick={() => router.push("/community")}
+            style={{ marginRight: "1rem" }}
+          >
+            Community
+          </button>
+          <button className={styles.signoutButton} onClick={() => signOut()}>
+            Sign out
+          </button>
+        </div>
+      </div>
 
       {/* Saved albums */}
       <div className={styles.albumGrid}>
