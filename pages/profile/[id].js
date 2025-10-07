@@ -1,18 +1,22 @@
 // pages/profile/[id].js
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient";
 import SpotifyWebApi from "spotify-web-api-js";
 import styles from "../../styles/Home.module.css";
+import { DarkModeContext } from "../_app"; // adjust path if needed
 
 const spotifyApi = new SpotifyWebApi();
 
 export default function ProfilePage() {
   const router = useRouter();
   const { id } = router.query;
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
 
+  // Fetch session
   useEffect(() => {
     async function fetchSession() {
       const res = await fetch("/api/auth/session");
@@ -23,6 +27,7 @@ export default function ProfilePage() {
     fetchSession();
   }, []);
 
+  // Fetch profile when session and id are available
   useEffect(() => {
     if (id && session) fetchProfile();
   }, [id, session]);
@@ -47,7 +52,7 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      // If no image, try fetching from Spotify
+      // If no image, fetch from Spotify
       if (!data.image) {
         try {
           const spotifyUser = await spotifyApi.getUser(data.id);
@@ -69,17 +74,56 @@ export default function ProfilePage() {
     }
   }
 
-  if (!user) return <p>Loading profile...</p>;
+  // Show background while loading to avoid white flash
+  if (!user)
+    return (
+      <div
+        className={`${darkMode ? "dark" : ""}`}
+        style={{
+          minHeight: "100vh",
+          background: darkMode ? "#111" : "#f5f5f5",
+          transition: "background 0.3s",
+        }}
+      />
+    );
 
   return (
-    <div className={styles.container}>
+    <div
+      className={`${styles.container} ${darkMode ? "dark" : ""}`}
+      style={{ transition: "background 0.3s, color 0.3s" }}
+    >
+      {/* Header */}
       <div className={styles.header}>
-        <h1>{user.name}</h1>
-        <button className={styles.signoutButton} onClick={() => router.push("/community")}>
-          ⬅ Back
-        </button>
+        <h1>{user.name}'s Albums</h1>
+        <div className={styles.headerButtons}>
+          <button
+            className={styles.signoutButton}
+            onClick={() => router.push("/community")}
+          >
+            ⬅ Back
+          </button>
+          <button
+            className={styles.signoutButton}
+            onClick={() => router.push("/")}
+          >
+            🏠 Home
+          </button>
+          <button
+            className={styles.signoutButton}
+            onClick={() => signOut()}
+          >
+            Sign out
+          </button>
+          <button
+            className={styles.darkModeButton}
+            onClick={toggleDarkMode}
+          >
+            {darkMode ? "Dark Mode On" : "Dark Mode Off"}
+          </button>
+        </div>
       </div>
 
+      {/* Profile Image and Albums */}
       <div style={{ textAlign: "center" }}>
         {user.image && (
           <img
@@ -94,7 +138,6 @@ export default function ProfilePage() {
           />
         )}
 
-        <h2>Top Albums</h2>
         <div className={styles.albumGrid}>
           {user.user_albums?.map((album) => (
             <div key={album.album_id} className={styles.albumCard}>
