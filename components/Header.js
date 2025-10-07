@@ -19,14 +19,6 @@ export default function Header({ mainTitle, pageTitle, currentPath, userId }) {
         <div className={styles.headerButtons}>
           {session && (
             <>
-              {currentPath.startsWith("/profile/") && (
-                <button
-                  className={styles.signoutButton}
-                  onClick={() => router.push("/community")}
-                >
-                  Back
-                </button>
-              )}
 
               {currentPath !== "/community" && (
                 <button
