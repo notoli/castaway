@@ -7,6 +7,9 @@ import CookieConsent, { getCookieConsentValue } from "react-cookie-consent";
 import Script from "next/script";
 import * as gtag from "../lib/gtag";
 
+// ───────────────────────────────
+//  Profile Upsert (runs on login)
+// ───────────────────────────────
 function ProfileUpsert({ children }) {
   const { data: session } = useSession();
 
@@ -38,6 +41,106 @@ function ProfileUpsert({ children }) {
   return children;
 }
 
+// ───────────────────────────────
+//  Cookie Consent + Analytics
+// ───────────────────────────────
+function CookieBanner() {
+  const consentCookie =
+    typeof window !== "undefined"
+      ? document.cookie.includes("appCookieConsent=true")
+      : false;
+
+  return (
+    <>
+      {/* ✅ Google Analytics (only loads after consent) */}
+      {consentCookie && (
+        <>
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-T51KSG2XN6"
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-T51KSG2XN6', {
+                anonymize_ip: true,
+              });
+            `}
+          </Script>
+        </>
+      )}
+
+      {/* ✅ GDPR Cookie Banner */}
+      <CookieConsent
+        location="bottom"
+        cookieName="appCookieConsent"
+        buttonText="Accept"
+        declineButtonText="Decline"
+        enableDeclineButton
+        style={{
+          background: "#222",
+          color: "#fff",
+          fontSize: "14px",
+          padding: "1rem",
+          zIndex: 9999,
+        }}
+        buttonStyle={{
+          background: "#1DB954",
+          color: "#fff",
+          fontSize: "14px",
+          borderRadius: "8px",
+        }}
+        declineButtonStyle={{
+          background: "#555",
+          color: "#fff",
+          fontSize: "14px",
+          borderRadius: "8px",
+        }}
+        expires={150}
+        onAccept={async () => {
+          try {
+            await fetch("/api/consent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ consent_status: "accepted" }),
+            });
+            // reload to activate GA
+            window.location.reload();
+          } catch (err) {
+            console.error("Error logging consent:", err);
+          }
+        }}
+        onDecline={async () => {
+          try {
+            await fetch("/api/consent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ consent_status: "declined" }),
+            });
+          } catch (err) {
+            console.error("Error logging consent:", err);
+          }
+        }}
+      >
+        We use cookies necessary for this site to function and, with your
+        consent, to measure usage via Google Analytics.{" "}
+        <a
+          href="/privacy"
+          style={{ color: "#1DB954", textDecoration: "underline" }}
+        >
+          Learn more
+        </a>
+        .
+      </CookieConsent>
+    </>
+  );
+}
+
+// ───────────────────────────────
+//  Main App Wrapper
+// ───────────────────────────────
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   const consent = getCookieConsentValue("appCookieConsent") === "true";
 

@@ -1,4 +1,70 @@
+/* Header layout container */
+.headerContainer {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+/* Top row: title + buttons */
+.headerTop {
+  display: flex;
+  justify-content: space-between; /* title left, buttons right */
+  align-items: center;
+  flex-wrap: wrap; /* wrap on smaller screens */
+  gap: 0.5rem;
+}
+
+/* Buttons row inside header */
+.headerButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Line under header */
+.headerLine {
+  margin: 0.5rem 0;
+  border: 0;
+  height: 1px;
+  background: #ccc;
+}
+
+/* Page subtitle / page title below line */
+.pageTitle {
+  margin: 0;
+  font-weight: normal;
+  color: #555;
+}
+
+/* Make dark mode button same size as other buttons */
+.darkModeButton {
+  padding: 0.5rem 1rem; /* matches .signoutButton */
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #2a4d4f;
+  color: #fff;
+  transition: background 0.3s;
+}
+
+.darkModeButton:hover {
+  background: #1f3b3c;
+}
 /* /styles/Home.module.css */
+
+/* Dark mode body transition (smooth) */
+body, .dark .container {
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+/* Smooth theme transition */
+.container, .albumCard, .header, .searchContainer, .searchInput, .searchDropdown {
+  transition: 
+    background 0.4s ease, 
+    color 0.4s ease, 
+    border-color 0.4s ease, 
+    box-shadow 0.4s ease;
+}
 
 .container {
   min-height: 100vh;
@@ -7,11 +73,20 @@
   background: linear-gradient(to bottom, #fdf6e3, #cce7e8); /* sand to sea */
 }
 
-.header {
+/* -------------------- HEADER -------------------- */
+
+.headerContainer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 1rem;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between; /* title left, buttons right */
+  align-items: center;
+  flex-wrap: wrap; /* wrap on smaller screens */
+  gap: 0.5rem;
 }
 
 .header h1 {
@@ -20,14 +95,55 @@
   color: #2a4d4f;
 }
 
-.signoutButton {
+.headerButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.headerLine {
+  margin: 0.5rem 0;
+  border: 0;
+  height: 1px;
+  background: #ccc;
+}
+
+.pageTitle {
+  margin: 0;
+  font-weight: normal;
+  color: #555;
+}
+
+/* -------------------- BUTTONS -------------------- */
+
+.signoutButton,
+.darkModeButton {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 20px;
-  background: #e76f51;
-  color: white;
   cursor: pointer;
 }
+
+.signoutButton {
+  background: #e76f51;
+  color: white;
+}
+
+.signoutButton:hover {
+  background: #f2845c;
+}
+
+.darkModeButton {
+  background: #2a4d4f;
+  color: #fff;
+  transition: background 0.3s;
+}
+
+.darkModeButton:hover {
+  background: #1f3b3c;
+}
+
+/* -------------------- ALBUM GRID -------------------- */
 
 .albumGrid {
   display: grid;
@@ -50,7 +166,6 @@
 .albumCard:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  /* Do NOT set z-index here; let the delete button be above */
 }
 
 .deleteButton {
@@ -63,7 +178,7 @@
   color: #888;
   cursor: pointer;
   transition: color 0.2s, transform 0.2s;
-  z-index: 10; /* <-- add this */
+  z-index: 10;
 }
 
 .deleteButton:hover {
@@ -81,7 +196,8 @@
   transform: translateY(-3px);
 }
 
-/* Search section */
+/* -------------------- SEARCH -------------------- */
+
 .searchContainer {
   margin-top: 2rem;
   position: relative;
@@ -133,4 +249,80 @@
   border-color: #2a4d4f;
   box-shadow: 0 0 5px rgba(42,77,79,0.3);
   outline: none;
+}
+
+/* -------------------- DARK MODE -------------------- */
+
+:global(.dark) .container {
+  background: linear-gradient(to bottom, #0b1a1d, #142f30);
+  color: #eae3d2;
+}
+
+:global(.dark) .header h1 {
+  color: #f3dfc1;
+}
+
+:global(.dark) .signoutButton {
+  background: #e76f51;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+:global(.dark) .signoutButton:hover {
+  background: #f2845c;
+}
+
+:global(.dark) .albumCard {
+  background: #1b2b2c;
+  border: 1px solid #285355;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+:global(.dark) .albumCard:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.7);
+}
+
+:global(.dark) .albumCard p {
+  color: #eae3d2;
+}
+
+:global(.dark) .deleteButton {
+  color: #aaa;
+}
+
+:global(.dark) .deleteButton:hover {
+  color: #ff8666;
+}
+
+:global(.dark) .searchContainer h2 {
+  color: #f3dfc1;
+}
+
+:global(.dark) .searchInput {
+  background: #1b2b2c;
+  border: 1px solid #285355;
+  color: #f5f5f5;
+}
+
+:global(.dark) .searchInput:focus {
+  border-color: #f4a261;
+  box-shadow: 0 0 6px rgba(244,162,97,0.4);
+  outline: none;
+}
+
+:global(.dark) .searchDropdown {
+  background: #1b2b2c;
+  border: 1px solid #2f5e60;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+}
+
+:global(.dark) .searchDropdown li {
+  color: #f0ede8;
+  border-bottom: 1px solid #2a4d4f;
+}
+
+:global(.dark) .searchDropdown li:hover {
+  background: #244243;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4);
 }
