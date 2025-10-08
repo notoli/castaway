@@ -1,12 +1,12 @@
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../lib/authOptions";
+
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") {
-      return res.status(200).json({ message: "API route is working" });
-    }
-
-    return res.status(200).json({ message: "POST request OK" });
+    const session = await getServerSession(req, res, authOptions);
+    return res.status(200).json({ session });
   } catch (err) {
-    console.error("Basic test failed:", err);
+    console.error("Session test failed:", err);
     return res.status(500).json({ error: err.message });
   }
 }
