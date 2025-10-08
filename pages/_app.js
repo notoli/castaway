@@ -1,11 +1,38 @@
 // pages/_app.js
+import { createContext, useState, useEffect } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { useEffect } from "react";
-import "../styles/globals.css";
-import { supabase } from "../lib/supabaseClient";
-import CookieConsent, { getCookieConsentValue } from "react-cookie-consent";
 import Script from "next/script";
-import * as gtag from "../lib/gtag";
+import CookieConsent from "react-cookie-consent";
+import "../styles/globals.css";
+
+// ───────────────────────────────
+//  Dark Mode Context
+// ───────────────────────────────
+export const DarkModeContext = createContext();
+
+function DarkModeProvider({ children }) {
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Load preference from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("darkMode");
+    if (stored) setDarkMode(stored === "true");
+  }, []);
+
+  // Apply theme & persist setting
+  useEffect(() => {
+    document.body.classList.toggle("dark", darkMode);
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+
+  return (
+    <DarkModeContext.Provider value={{ darkMode, toggleDarkMode }}>
+      {children}
+    </DarkModeContext.Provider>
+  );
+}
 
 // ───────────────────────────────
 //  Profile Upsert (runs on login)
@@ -106,8 +133,7 @@ function CookieBanner() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ consent_status: "accepted" }),
             });
-            // reload to activate GA
-            window.location.reload();
+            window.location.reload(); // reload to activate GA
           } catch (err) {
             console.error("Error logging consent:", err);
           }
@@ -142,74 +168,14 @@ function CookieBanner() {
 //  Main App Wrapper
 // ───────────────────────────────
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
-  const consent = getCookieConsentValue("appCookieConsent") === "true";
-
   return (
     <SessionProvider session={session}>
-      {/* ✅ Load GA only after consent */}
-      {consent && (
-        <>
-          <Script
-            strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          />
-          <Script
-            id="gtag-init"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { anonymize_ip: true });
-              `,
-            }}
-          />
-        </>
-      )}
-
-      <ProfileUpsert>
-        <Component {...pageProps} />
-
-        {/* ✅ GDPR Cookie Banner */}
-        <CookieConsent
-          location="bottom"
-          cookieName="appCookieConsent"
-          buttonText="Accept"
-          declineButtonText="Decline"
-          enableDeclineButton
-          style={{
-            background: "#222",
-            color: "#fff",
-            fontSize: "14px",
-            padding: "1rem",
-            zIndex: 9999,
-          }}
-          buttonStyle={{
-            background: "#1DB954",
-            color: "#fff",
-            fontSize: "14px",
-            borderRadius: "8px",
-          }}
-          declineButtonStyle={{
-            background: "#555",
-            color: "#fff",
-            fontSize: "14px",
-            borderRadius: "8px",
-          }}
-          expires={150}
-          onAccept={() => {
-            // reload to trigger GA load
-            window.location.reload();
-          }}
-        >
-          We use cookies necessary for this site to function and, with your consent,
-          to measure usage via Google Analytics.{" "}
-          <a href="/privacy" style={{ color: "#1DB954", textDecoration: "underline" }}>
-            Learn more
-          </a>
-        </CookieConsent>
-      </ProfileUpsert>
+      <DarkModeProvider>
+        <ProfileUpsert>
+          <Component {...pageProps} />
+          <CookieBanner />
+        </ProfileUpsert>
+      </DarkModeProvider>
     </SessionProvider>
   );
 }
