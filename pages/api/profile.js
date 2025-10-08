@@ -1,3 +1,4 @@
+// /pages/api/profile.js
 import { supabaseServer } from "../../lib/supabaseServer";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../lib/authOptions";
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
         );
 
       if (error) {
-        console.error("Supabase error:", error);
+        console.error("Supabase upsert error:", error);
         return res.status(500).json({ error: error.message });
       }
 
