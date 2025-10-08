@@ -20,6 +20,7 @@ export default function Home() {
   const [albums, setAlbums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loadingAlbums, setLoadingAlbums] = useState(true);
+  const [publicProfile, setPublicProfile] = useState(true);
 
   const searchRef = useRef(null);
 
@@ -27,6 +28,9 @@ export default function Home() {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
+  // ───────────────
+  // Fetch user's albums
+  // ───────────────
   useEffect(() => {
     if (!session?.user) return;
 
@@ -45,6 +49,41 @@ export default function Home() {
     fetchAlbums();
   }, [session]);
 
+  // ───────────────
+  // Fetch current profile visibility
+  // ───────────────
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("public")
+        .eq("id", session.user.id)
+        .single();
+      if (error) console.error(error);
+      else if (data) setPublicProfile(data.public);
+    };
+
+    fetchProfile();
+  }, [session]);
+
+  // ───────────────
+  // Toggle public profile
+  // ───────────────
+  const togglePublicProfile = async () => {
+    const newStatus = !publicProfile;
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ public: newStatus })
+      .eq("id", session.user.id);
+    if (error) console.error("Error updating profile visibility:", error);
+    else setPublicProfile(newStatus);
+  };
+
+  // ───────────────
+  // Spotify search
+  // ───────────────
   async function searchAlbums(term) {
     if (!term || !session?.accessToken) {
       setSearchResults([]);
@@ -61,6 +100,9 @@ export default function Home() {
     }
   }
 
+  // ───────────────
+  // Add album
+  // ───────────────
   async function addAlbum(album) {
     if (!album || !session) return;
     if (albums.length >= 5) return alert("You can only add up to 5 albums.");
@@ -87,6 +129,9 @@ export default function Home() {
     }
   }
 
+  // ───────────────
+  // Delete album
+  // ───────────────
   async function deleteAlbum(albumId, albumName) {
     if (!window.confirm(`Delete "${albumName}" from your top albums?`)) return;
     const { error } = await supabase
@@ -97,6 +142,9 @@ export default function Home() {
     if (!error) setAlbums((prev) => prev.filter((a) => a.id !== albumId));
   }
 
+  // ───────────────
+  // Close dropdown on outside click
+  // ───────────────
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target))
@@ -116,6 +164,21 @@ export default function Home() {
         currentPath={router.pathname}
         userId={session.user.id}
       />
+
+      {/* ─────────────── */}
+      {/* Public Profile Toggle */}
+      {/* ─────────────── */}
+      <div style={{ margin: "1rem 0" }}>
+        <label style={{ cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={publicProfile}
+            onChange={togglePublicProfile}
+            style={{ marginRight: "0.5rem" }}
+          />
+          Make my profile public
+        </label>
+      </div>
 
       {loadingAlbums ? (
         <p>Loading your albums…</p>
