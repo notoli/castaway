@@ -6,20 +6,18 @@ import CookieConsent from "react-cookie-consent";
 import "../styles/globals.css";
 
 // ───────────────────────────────
-//  Dark Mode Context
+// Dark Mode Context
 // ───────────────────────────────
 export const DarkModeContext = createContext();
 
 function DarkModeProvider({ children }) {
   const [darkMode, setDarkMode] = useState(false);
 
-  // Load preference from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("darkMode");
     if (stored) setDarkMode(stored === "true");
   }, []);
 
-  // Apply theme & persist setting
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
     localStorage.setItem("darkMode", darkMode);
@@ -35,13 +33,14 @@ function DarkModeProvider({ children }) {
 }
 
 // ───────────────────────────────
-//  Profile Upsert (runs on login)
+// Profile Upsert (runs on login)
 // ───────────────────────────────
 function ProfileUpsert({ children }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const [hasUpserted, setHasUpserted] = useState(false);
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (status !== "authenticated" || !session?.user || hasUpserted) return;
 
     const upsertProfile = async () => {
       try {
@@ -53,23 +52,30 @@ function ProfileUpsert({ children }) {
             image: session.user.image || null,
           }),
         });
+
         if (!res.ok) {
-          const error = await res.json();
-          console.error("Error upserting profile:", error);
+          const errorBody = await res.text();
+          console.error("Error upserting profile:", res.status, errorBody);
+        } else {
+          // consume JSON safely
+          const data = await res.json().catch(() => null);
+          console.log("Profile upserted:", data);
         }
+
+        setHasUpserted(true); // only upsert once per login
       } catch (err) {
         console.error("Error upserting profile:", err);
       }
     };
 
     upsertProfile();
-  }, [session]);
+  }, [status, session, hasUpserted]);
 
   return children;
 }
 
 // ───────────────────────────────
-//  Cookie Consent + Analytics
+// Cookie Consent + Analytics
 // ───────────────────────────────
 function CookieBanner() {
   const consentCookie =
@@ -79,7 +85,6 @@ function CookieBanner() {
 
   return (
     <>
-      {/* ✅ Google Analytics (only loads after consent) */}
       {consentCookie && (
         <>
           <Script
@@ -91,15 +96,12 @@ function CookieBanner() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-T51KSG2XN6', {
-                anonymize_ip: true,
-              });
+              gtag('config', 'G-T51KSG2XN6', { anonymize_ip: true });
             `}
           </Script>
         </>
       )}
 
-      {/* ✅ GDPR Cookie Banner */}
       <CookieConsent
         location="bottom"
         cookieName="appCookieConsent"
@@ -133,7 +135,7 @@ function CookieBanner() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ consent_status: "accepted" }),
             });
-            window.location.reload(); // reload to activate GA
+            window.location.reload();
           } catch (err) {
             console.error("Error logging consent:", err);
           }
@@ -165,7 +167,7 @@ function CookieBanner() {
 }
 
 // ───────────────────────────────
-//  Main App Wrapper
+// Main App Wrapper
 // ───────────────────────────────
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (

@@ -1,4 +1,3 @@
-// pages/api/profile.js
 import { supabaseServer } from "../../lib/supabaseServer";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../lib/authOptions";
@@ -14,7 +13,6 @@ export default async function handler(req, res) {
     const { name, image } = req.body;
 
     try {
-      // Use the server client so RLS does not block the insert/upsert
       const { data, error } = await supabaseServer
         .from("profiles")
         .upsert(
@@ -34,6 +32,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // Explicitly handle unsupported methods
   res.setHeader("Allow", ["POST"]);
   return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
 }
