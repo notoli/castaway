@@ -31,23 +31,43 @@ export default function Home() {
   // ───────────────
   // Fetch user's albums
   // ───────────────
-  useEffect(() => {
-    if (!session?.user) return;
+useEffect(() => {
+  if (!session?.user) return;
 
-    const fetchAlbums = async () => {
-      setLoadingAlbums(true);
+  const fetchAlbums = async () => {
+    setLoadingAlbums(true);
+
+    try {
+      // Select albums where either:
+      // 1) The album belongs to the current user, OR
+      // 2) The album belongs to a public profile
       const { data, error } = await supabase
         .from("user_albums")
-        .select("*")
-        .eq("user_id", session.user.id)
+        .select(`
+          *,
+          profiles (public)
+        `)
         .order("created_at", { ascending: false });
-      if (error) console.error(error);
-      else setAlbums(data || []);
-      setLoadingAlbums(false);
-    };
 
-    fetchAlbums();
-  }, [session]);
+      if (error) throw error;
+
+      // Filter client-side: keep albums that are either:
+      // - Owned by current user, OR
+      // - Belong to a public profile
+      const filteredAlbums = data.filter(
+        (album) => album.user_id === session.user.id || album.profiles?.public
+      );
+
+      setAlbums(filteredAlbums || []);
+    } catch (err) {
+      console.error("Error fetching albums:", err);
+    } finally {
+      setLoadingAlbums(false);
+    }
+  };
+
+  fetchAlbums();
+}, [session]);
 
   // ───────────────
   // Fetch current profile visibility
@@ -100,47 +120,55 @@ export default function Home() {
     }
   }
 
-  // ───────────────
-  // Add album
-  // ───────────────
-  async function addAlbum(album) {
-    if (!album || !session) return;
-    if (albums.length >= 5) return alert("You can only add up to 5 albums.");
-    if (albums.some((a) => a.album_id === album.id))
-      return alert("You already added this album!");
+// Add album
+async function addAlbum(album) {
+  if (!album || !session) return;
+  if (albums.length >= 5) return alert("You can only add up to 5 albums.");
+  if (albums.some((a) => a.album_id === album.id))
+    return alert("You already added this album!");
 
-    const { data, error } = await supabase
-      .from("user_albums")
-      .insert({
-        user_id: session.user.id,
-        album_id: album.id,
-        album_name: album.name,
-        artist_name: album.artists[0]?.name,
-        album_image: album.images[0]?.url || null,
-      })
-      .select();
+  const res = await fetch("/api/albums", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      album_id: album.id,
+      album_name: album.name,
+      artist_name: album.artists[0]?.name,
+      album_image: album.images[0]?.url || null,
+    }),
+  });
 
-    if (error) console.error(error);
-    else {
-      setAlbums((prev) => [...prev, data[0]]);
-      setSearchTerm("");
-      setSearchResults([]);
-      setDropdownOpen(false);
-    }
+  const result = await res.json();
+
+  if (!res.ok) {
+    console.error(result.error);
+    return alert("Failed to add album.");
   }
 
-  // ───────────────
-  // Delete album
-  // ───────────────
-  async function deleteAlbum(albumId, albumName) {
-    if (!window.confirm(`Delete "${albumName}" from your top albums?`)) return;
-    const { error } = await supabase
-      .from("user_albums")
-      .delete()
-      .eq("id", albumId)
-      .eq("user_id", session.user.id);
-    if (!error) setAlbums((prev) => prev.filter((a) => a.id !== albumId));
+  setAlbums((prev) => [...prev, result.data[0]]);
+  setSearchTerm("");
+  setSearchResults([]);
+  setDropdownOpen(false);
+}
+
+// Delete album
+async function deleteAlbum(albumId, albumName) {
+  if (!window.confirm(`Delete "${albumName}" from your top albums?`)) return;
+
+  const res = await fetch("/api/albums", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: albumId }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) {
+    console.error(result.error);
+    return alert("Failed to delete album.");
   }
+
+  setAlbums((prev) => prev.filter((a) => a.id !== albumId));
+}
 
   // ───────────────
   // Close dropdown on outside click
